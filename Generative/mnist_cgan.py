@@ -1,5 +1,7 @@
-from GAN.classes.BasicGAN import GAN
-from GAN.utils.callbacks import WandbImages
+import sys
+
+from classes.ConditionalGAN import cGAN
+from utils.callbacks import WandbImagesConditionalGAN,SaveGeneratorWeights
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -9,9 +11,9 @@ from wandb.keras import WandbCallback
 
 wandb.login()
 
-config={"dataset":"mnist"}
+config={"dataset":"mnist", "type":"conditionalGAN"}
 
-wandb.init(project="TorVergataExperiment-GAN",config=config)
+wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 ## DATA
 
@@ -22,7 +24,11 @@ wandb.init(project="TorVergataExperiment-GAN",config=config)
 
 ###
 BS=256
-g=GAN(BS)
+g=cGAN(latent_dim=100,dims=(28,28,1),n_classes=10,emb_dim=50)
+
+print(g.generator.summary())
+print(g.discriminator.summary())
+print(g.gan.summary())
 
 
 ts=len(x_train)//BS
@@ -32,7 +38,7 @@ x_test=np.expand_dims(x_test.astype("float32")/255.,-1)
 
 
 
-train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
+train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
 train_dataset=  train_dataset.shuffle(buffer_size=1024).batch(BS).repeat()
 
 
@@ -41,21 +47,13 @@ test_dataset=test_dataset.shuffle(1024).batch(BS)
 
 ##CHECKPOINT
 
-model_chek=tf.keras.callbacks.ModelCheckpoint(
-    "models/mnist_gan.h5",
-    monitor="g_loss",
-    verbose=0,
-    save_best_only=False,
-    mode="auto",
-    save_freq="epoch",
-
-)
+model_check=SaveGeneratorWeights(filepath="models/generator_cgan_mnist.h5")
 
 
 callbacks=[
-    WandbImages(),
+    WandbImagesConditionalGAN(),
     WandbCallback(),
-    model_chek
+    model_check,
 ]
 
 ### TRAINING
