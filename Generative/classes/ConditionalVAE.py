@@ -5,7 +5,7 @@ from tensorflow.keras.layers import *
 
 from tensorflow.keras.models import Model
 
-
+import numpy as np
 
 
 
@@ -22,61 +22,27 @@ class Sampling(keras.layers.Layer):
 
 
 
-class VAE(keras.Model):
+class CVAE(keras.Model):
 
-    """Class for Variational Autoencoder extending keras.model
+    """Class for Conditional Variational Autoencoder extending keras.model
 
-    more in-depth explaination could be found
-    at :         https://arxiv.org/abs/1606.05908
-    or :         https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
-    very useful: https://agustinus.kristia.de/techblog/2016/12/10/variational-autoencoder/
+    more in-depth explaination could be found at: https://agustinus.kristia.de/techblog/2016/12/17/conditional-vae/
 
 
     Theory:
     --------
 
-    The idea of a VAE is that x=d(e(x)) where e is an encoder and d a decoder.
-    The encoder map the input x in a latent space distribution p(z|x) and we want that similar inputs are close in this latent space
+    Same in VAE but we want to condition the distributions on c
 
-
-    We want p(z|x) gaussian and we can use bayes theorem
-
-    p(z|x)= p(x|z) p(z)/ p(x)
-
-    p(x|z) is a gaussian N(f(z),cI).
-    Let's assume a N(0,1) for the prior p(z) so ideally we could compute p(z|x).
-    Unfortunately p(x) is a sort for normalizazion that could be expressed p(x) = integrate p(x|u)p(u)du over all possible u.
-    This is usally untractable so we need a function that approximate p(z|x) because we can't compute it directly.
-
-    In Variation Inference (VI) usually we look for best approximation of a target distribution from parametrized distributions in
-    a family like gaussians. We try to minimize a measure of distance between target and approximating distributions.
-
-    So we can approximate p(z|x) with a q_x(z) which is a Gaussian N(g(x),h(x))
-
-    We can search in the space of g and h their best values, the values that minimize the KL divergence
-
-    g*,h*=argmin KL(q_x(z),p(z|x))
-
-    using KL definition and bayes theorem
-
-    g*,h*=argmin (E[log(q_x(z))] - E[log(p(x|z)] - E[log(p(z))] + E[log(p(x))])
-
-    rearranging the terms and discarding E[log(p(z))] which is a constant
-
-    g*,h*=argmin( E(log(p(x|z)) - KL (q_x(z),p(x))).
-
-    E(log(p(x|z)) is just (1/2c) *||x-f(z)||^2 becuase p(x|z) is a guassian and when we found the best values to compute q
-    we an use them to approximate p(x) which was the problematic quantity.
-
-    Basically encoder is Q(z|x) or q_x(z) and the decoder is p(x|z).
-
+    encoder=Q(z|X,c)
+    decoder=P(X|z,c) so basically we have one p(z) for each possible conditions
 
 
     """
 
 
 
-    def __init__(self, input_dim, latent_dim,output_channel=1, **kwargs):
+    def __init__(self, input_dim, latent_dim,n_classes=10,emb_dim=50,output_channel=1, **kwargs):
         """
 
         :param input_dim: dimension of images
@@ -91,10 +57,12 @@ class VAE(keras.Model):
 
 
         """
-        super(VAE, self).__init__(**kwargs)
+        super(CVAE, self).__init__(**kwargs)
 
         self.input_dim=input_dim
         self.latent_dim=latent_dim
+        self.n_classes=n_classes
+        self.emb_dim=emb_dim
 
         self.encoder = self.build_encoder(input_dim,latent_dim)
         self.decoder = self.build_decoder(latent_dim,output_channel=1)
@@ -129,12 +97,16 @@ class VAE(keras.Model):
         :return: metrics
         """
 
+
         with tf.GradientTape() as tape:
-            z_mean, z_log_var, z = self.encoder(data)
-            reconstruction = self.decoder(z)
+
+            img,conditions=data
+            z_mean, z_log_var, z = self.encoder([img,conditions])
+
+            reconstruction = self.decoder([z,conditions])
             reconstruction_loss = tf.reduce_mean(
                 tf.reduce_sum(
-                    keras.losses.binary_crossentropy(data, reconstruction), axis=(1, 2)
+                    keras.losses.binary_crossentropy(img, reconstruction), axis=(1, 2)
                 )
             )
             kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
@@ -152,13 +124,12 @@ class VAE(keras.Model):
         }
 
     def test_step(self, data):
-        if isinstance(data, tuple):
-            data = data[0]
+        img, conditions = data
 
-        z_mean, z_log_var, z = self.encoder(data)
-        reconstruction = self.decoder(z)
+        z_mean, z_log_var, z = self.encoder([img,conditions])
+        reconstruction = self.decoder([z,conditions])
         reconstruction_loss = tf.reduce_mean(
-            keras.losses.binary_crossentropy(data, reconstruction)
+            keras.losses.binary_crossentropy(img, reconstruction)
         )
         reconstruction_loss *= 28 * 28
         kl_loss = 1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var)
@@ -171,19 +142,33 @@ class VAE(keras.Model):
             "kl_loss": kl_loss,
         }
 
-    def call(self, x):
-        z_mean, z_log_var, z = self.encoder(x)
-        reconstruction = self.decoder(z)
+    def call(self, data):
+        x,cond=data
+        z_mean, z_log_var, z = self.encoder([x,cond])
+        reconstruction = self.decoder([z,cond])
         return reconstruction
 
-    def decode(self,z):
-        return self.decoder(z)
+    def decode(self,z,conditions):
+        return self.decoder([z,conditions])
 
-    def build_encoder(self,input_dim, latent_dim, chanDim=-1):
+    def build_encoder(self,input_dim, latent_dim,n_classes=10,emb_dim=50, chanDim=-1):
+
+
+        ## label input
+
+        condition_input=Input(shape=(1,))                               #input for condition the class
+        con=Embedding(n_classes,emb_dim)(condition_input)
+        con=Dense(np.prod(input_dim))(con)
+        con = Reshape((input_dim[0], input_dim[1], 1))(con)                 #produce image compatible shapes
+
+
+
+
         encoder_inputs = keras.Input(shape=input_dim)
 
+        merge = Concatenate()([encoder_inputs, con])
         # first block
-        x = Conv2D(32, (3, 3), padding="same")(encoder_inputs)
+        x = Conv2D(32, (3, 3), padding="same")(merge)
         x = Activation("relu")(x)
         x = BatchNormalization(axis=chanDim)(x)
 
@@ -222,16 +207,34 @@ class VAE(keras.Model):
         z_mean = Dense(latent_dim, name="z_mean")(x)
         z_log_var = Dense(latent_dim, name="z_log_var")(x)
         z = Sampling()([z_mean, z_log_var])
-        encoder = Model(encoder_inputs, [z_mean, z_log_var, z], name="encoder")
+        encoder = Model([encoder_inputs,condition_input], [z_mean, z_log_var, z], name="encoder")
         # encoder.summary()
         return encoder
 
 
-    def build_decoder(self,latent_dim, chanDim=-1, startDim=7,output_channel=1):
+    def build_decoder(self,latent_dim,n_classes=10,emb_dim=50, chanDim=-1, startDim=7,output_channel=1):
+
+
+        ## label input
+
+        condition_input=Input(shape=(1,))                              #input for condition the class
+        con=Embedding(n_classes,emb_dim)(condition_input)               #li stands for label input
+        con=Dense(startDim * startDim )(con)
+        con = Reshape((startDim, startDim, 1))(con)       #produce image compatible shapes
+
+
+
         latent_inputs = keras.Input(shape=(latent_dim,))
+
+
+
         x = Dense(startDim * startDim * 64)(latent_inputs)
         x = Reshape((startDim, startDim, 64))(x)
-        x = LeakyReLU()(x)
+
+        merge = Concatenate()([x, con])                                #maybe i can concatenate the data before
+
+
+        x = LeakyReLU()(merge)
 
 
         ## to work with mnist
@@ -249,7 +252,7 @@ class VAE(keras.Model):
         x = LeakyReLU()(x)
 
         decoder_outputs = Conv2DTranspose(output_channel, 3, activation="sigmoid", padding="same")(x)
-        decoder = Model(latent_inputs, decoder_outputs, name="decoder")
+        decoder = Model([latent_inputs,condition_input], decoder_outputs, name="decoder")
 
         return decoder
 
