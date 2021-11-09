@@ -1,0 +1,14 @@
+#TODO
+
+- Train VQ-VAE
+- PixelCNN per campionare VQ-VAE
+
+- Conditional VQ-VAE?
+
+- VQ-VAE 2
+- NVAE
+
+- Growing GAN
+
+- Funzioni univoche build_generator e build_encoder, con opzioni
+- Salvare anche l'architetettura oltre che i pesi.

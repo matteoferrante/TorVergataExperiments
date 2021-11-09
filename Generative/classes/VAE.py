@@ -26,8 +26,11 @@ class VAE(keras.Model):
 
     """Class for Variational Autoencoder extending keras.model
 
-    more in-depth explaination could be found at : https://arxiv.org/abs/1606.05908
-    or : https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
+    more in-depth explaination could be found
+    at :         https://arxiv.org/abs/1606.05908
+    or :         https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
+    very useful: https://agustinus.kristia.de/techblog/2016/12/10/variational-autoencoder/
+
 
     Theory:
     --------
@@ -65,6 +68,7 @@ class VAE(keras.Model):
     E(log(p(x|z)) is just (1/2c) *||x-f(z)||^2 becuase p(x|z) is a guassian and when we found the best values to compute q
     we an use them to approximate p(x) which was the problematic quantity.
 
+    Basically encoder is Q(z|x) or q_x(z) and the decoder is p(x|z).
 
 
 

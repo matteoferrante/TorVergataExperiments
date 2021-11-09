@@ -3,6 +3,9 @@ import tensorflow.keras as  keras
 import wandb
 import numpy as np
 from imutils import build_montages
+import os
+from os.path import join as opj
+
 
 class WandbImagesGAN(keras.callbacks.Callback):
     """
@@ -14,7 +17,7 @@ class WandbImagesGAN(keras.callbacks.Callback):
         random_latent_vectors = tf.random.normal(shape=(256, self.model.latent_dim))
         generated_images = self.model.generator(random_latent_vectors)
 
-        images = ((generated_images * 127.5) + 127.5)
+        images = generated_images*255.
         images = np.repeat(images, 3, axis=-1)
         vis = build_montages(images, (28, 28), (16, 16))[0]
 
@@ -87,6 +90,49 @@ class WandbImagesVAE(keras.callbacks.Callback):
         wandb.log(log)
 
 
+class WandbImagesCVAE(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb for VAE
+    """
+
+    def __init__(self, validation_data):
+
+        """Workaround to keep validation data!"""
+
+        super().__init__()
+        self.validation_data = validation_data
+
+    def on_epoch_end(self, epoch, logs=None):
+
+
+        if self.validation_data:
+            x_recon=self.model(next(iter(self.validation_data)))
+
+            x_recon=x_recon[:100] ## use more than 100 in bS
+            images = x_recon.numpy() * 255.
+            images = np.repeat(images, 3, axis=-1)
+            vis = build_montages(images, (28, 28), (10, 10))[0]
+
+            log={f"image":wandb.Image(vis)}
+            wandb.log(log)
+        else:
+            print(f"No validation data {self.validation_data}")
+
+        ## just sampling
+
+        z=np.random.randn(100,self.model.latent_dim)
+        n_classes = self.model.n_classes
+        conditions = np.repeat(np.arange(0, n_classes, 1).tolist(), 10)
+        x_sampled=self.model.decode(z,conditions)
+
+        images = x_sampled.numpy() *255.
+        images = np.repeat(images, 3, axis=-1)
+        vis = build_montages(images, (28, 28), (10, 10))[0]
+
+        log = {f"image_sampled": wandb.Image(vis)}
+        wandb.log(log)
+
+
 
 
 class SaveGeneratorWeights(keras.callbacks.Callback):
@@ -104,5 +150,73 @@ class SaveGeneratorWeights(keras.callbacks.Callback):
             self.model.generator.save_weights(self.filepath)
         except:
             self.model.encoder.save_weights(self.filepath)
+
+
+
+class Save_VQVAE_Weights(keras.callbacks.Callback):
+
+    def __init__(self, output_dir,outname,endname="mnist"):
+        """
+
+        :param output_dir: name of the output directory
+        :param outname: name of subdirectory to create used to save encoder, emebeddings and decoder
+        :param endname: usually the name of the dataset, used as end part of the saved name.
+        (for example end name: mnist -> files are saved as encoder_mnist.h5, embeddings_mnist.h5 and decoder_mnist.h5)
+        """
+        super().__init__()
+        self.outdir=opj(output_dir,outname)
+        self.endname=endname
+        os.makedirs(self.outdir,exist_ok=True)
+
+
+    def on_epoch_end(self, epoch,logs=None):
+
+        self.model.encoder.save_weights(opj(self.outdir,f"vq_vae_encoder_{self.endname}.h5"))
+
+        self.model.decoder.save_weights(opj(self.outdir,f"vq_vae_decoder_{self.endname}.h5"))
+
+
+    def on_train_end(self, logs=None):
+        emb=self.model.vq_layer.get_weights()
+        np.save(opj(self.outdir,f"vq_vae_embeddings_{self.endname}.npy"),emb)
+
+class WandbImagesVQVAE(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb for VAE
+    """
+
+    def __init__(self, validation_data,sample=None,pixel_cnn=None):
+
+        """
+
+        :param validation_data: dataset of images, data to reconstruct
+        :param sampling:  bool, if true this callback will sample some examples from latent codebook. It requires a pixel_cnn model
+        :param pixel_cnn: keras model required to sample the prior. It has to be trained separately
+        """
+        super().__init__()
+        self.validation_data = validation_data
+        self.sample=sample
+        self.pixel_cnn=pixel_cnn
+
+    def on_epoch_end(self, epoch, logs=None):
+
+
+        if self.validation_data:
+            x_recon=self.model(next(iter(self.validation_data)))
+
+            x_recon=x_recon[:100] ## use more than 100 in bS
+            images = x_recon.numpy() * 255.
+            images = np.repeat(images, 3, axis=-1)
+            vis = build_montages(images, (28, 28), (10, 10))[0]
+
+            log={f"image":wandb.Image(vis)}
+            wandb.log(log)
+        else:
+            print(f"No validation data {self.validation_data}")
+
+        if self.sample:
+
+            #TODO: use pixelCNN to sample the prior over the codebook
+            pass
 
 

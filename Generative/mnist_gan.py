@@ -1,5 +1,5 @@
-from classes.BasicGAN import GAN
-from utils.callbacks import WandbImagesGAN
+from classes.GAN import GAN
+from utils.callbacks import WandbImagesGAN, SaveGeneratorWeights
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -9,7 +9,7 @@ from wandb.keras import WandbCallback
 
 wandb.login()
 
-config={"dataset":"mnist"}
+config={"dataset":"mnist","type":"GAN"}
 
 wandb.init(project="TorVergataExperiment-Generative",config=config)
 
@@ -41,21 +41,14 @@ test_dataset=test_dataset.shuffle(1024).batch(BS)
 
 ##CHECKPOINT
 
-model_chek=tf.keras.callbacks.ModelCheckpoint(
-    "models/mnist_gan.h5",
-    monitor="g_loss",
-    verbose=0,
-    save_best_only=False,
-    mode="auto",
-    save_freq="epoch",
+model_check=SaveGeneratorWeights(filepath="models/generator_gan_mnist.h5")
 
-)
 
 
 callbacks=[
     WandbImagesGAN(),
     WandbCallback(),
-    model_chek
+    model_check
 ]
 
 ### TRAINING

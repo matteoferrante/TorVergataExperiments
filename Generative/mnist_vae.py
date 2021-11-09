@@ -12,6 +12,7 @@ from wandb.keras import WandbCallback
 wandb.login()
 
 
+
 config={"dataset":"mnist", "type":"VAE"}
 
 wandb.init(project="TorVergataExperiment-Generative",config=config)
@@ -61,6 +62,6 @@ callbacks=[
 
 ### TRAINING
 
-g.compile()
+g.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-4))
 g.fit(train_dataset,validation_data=test_dataset,steps_per_epoch=ts,validation_steps=vs,epochs=40,callbacks=callbacks)
 
