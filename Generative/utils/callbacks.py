@@ -1,3 +1,9 @@
+import sys
+
+
+sys.path.append(".")
+
+import json
 import tensorflow as tf
 import tensorflow.keras as  keras
 import wandb
@@ -180,6 +186,46 @@ class Save_VQVAE_Weights(keras.callbacks.Callback):
         emb=self.model.vq_layer.get_weights()
         np.save(opj(self.outdir,f"vq_vae_embeddings_{self.endname}.npy"),emb)
 
+
+
+
+
+class Save_PixelCNN_Weights(keras.callbacks.Callback):
+
+    def __init__(self, output_dir,outname,endname="mnist"):
+        """
+
+        :param output_dir: name of the output directory
+        :param outname: name of subdirectory to create used to save encoder, emebeddings and decoder
+        :param endname: usually the name of the dataset, used as end part of the saved name.
+        (for example end name: mnist -> files are saved as encoder_mnist.h5, embeddings_mnist.h5 and decoder_mnist.h5)
+        """
+        super().__init__()
+        self.outdir=opj(output_dir,outname)
+        self.endname=endname
+        os.makedirs(self.outdir,exist_ok=True)
+
+
+    def on_epoch_end(self, epoch,logs=None):
+
+        self.model.save_weights(opj(self.outdir,f"pixel_cnn_{self.endname}.h5"))
+
+
+
+    def on_train_begin(self, save_also_config=False,logs=None):
+        if save_also_config:
+            config=self.model.get_config()
+            a_file = open(opj(self.outdir,f"pixel_cnn_config_{self.endname}.json"), "w")
+            json.dump(config, a_file)
+            a_file.close()
+
+        json_dict=self.model.to_json()
+        with open(opj(self.outdir,f"pixel_cnn_{self.endname}.json"), 'w', encoding='utf-8') as f:
+            json.dump(json_dict, f)
+
+
+
+
 class WandbImagesVQVAE(keras.callbacks.Callback):
     """
     A custom Callback to produce a grid of images in wandb for VAE
@@ -218,5 +264,6 @@ class WandbImagesVQVAE(keras.callbacks.Callback):
 
             #TODO: use pixelCNN to sample the prior over the codebook
             pass
+
 
 

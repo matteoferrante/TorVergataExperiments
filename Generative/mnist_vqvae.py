@@ -1,9 +1,10 @@
+import itertools
 import os
 import sys
 
 from classes.VQVAE import VQVAE
-from classes.PixelCNN import PixelCNN
-from utils.callbacks import WandbImagesVQVAE, Save_VQVAE_Weights
+from classes.PixelCNN import PixelCNN,TfDistPixelCNN
+from utils.callbacks import WandbImagesVQVAE, Save_VQVAE_Weights, Save_PixelCNN_Weights
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -118,11 +119,8 @@ elif args.phase==1:
     model_path=args.model
     print(f"[INFO] Training PixelCNN Autoregressive model with embeddings from {args.model}")
 
-    pixel_cnn=PixelCNN()
-    pixel_cnn.build_model()
-    pixel_cnn.model.summary()
+    pixel_BS=256
 
-    pixel_cnn.compile()
 
 
     ## GENERATE CODEBOOK
@@ -139,16 +137,74 @@ elif args.phase==1:
 
     # Generate the codebook indices.
     train_dataset_pixel = tf.data.Dataset.from_tensor_slices(x_train)
-    train_dataset_pixel = train_dataset_pixel.batch(BS).shuffle(1024)
+    train_dataset_pixel = train_dataset_pixel.batch(pixel_BS).shuffle(1024)
 
     encoded_outputs = model.encoder.predict(train_dataset_pixel)
-    flat_enc_outputs = encoded_outputs.reshape(-1, encoded_outputs.shape[-1])
-    codebook_indices = model.vq_layer.get_code_indices(flat_enc_outputs)
+    #flat_enc_outputs = encoded_outputs.reshape(-1, encoded_outputs.shape[-1])
 
-    codebook_indices = codebook_indices.numpy().reshape(encoded_outputs.shape[:-1])
+    codebook_indices=[]
+    for b in range(len(train_dataset_pixel)):
+
+        #flat the outputs
+        flat_enc_outputs=encoded_outputs[b*pixel_BS:(b+1)*pixel_BS].reshape(-1,encoded_outputs.shape[-1])
+        code_index=model.vq_layer.get_code_indices(flat_enc_outputs).numpy()
+        codebook_indices.append(list(code_index))
+
+    codebook_indices = list(itertools.chain.from_iterable(codebook_indices))
+    codebook_indices = np.array(codebook_indices)
+    print(codebook_indices.shape)
+    codebook_indices = codebook_indices.reshape(encoded_outputs.shape[:-1])
     print(f"Shape of the training data for PixelCNN: {codebook_indices.shape}")
 
-    pixel_cnn.fit(codebook_indices,codebook_indices,batch_size=BS,validation_split=0.1)
+
+    input_shape=(codebook_indices.shape[1],codebook_indices.shape[2])
+
+    ## RIFACCIO CON TFDISTPIXELCNN
+
+    ## PROVO CN TFPIXELCNN
+
+    tfpix = TfDistPixelCNN(num_hierarchies=1, num_filters=64)
+    tfpix.model.summary()
+    tfpix.compile()
+
+    pixel_BS = 1
+
+    codebook_ds = tf.data.Dataset.from_tensor_slices((codebook_indices, codebook_indices))
+    codebook_ds = codebook_ds.repeat().shuffle(1024).batch(pixel_BS)
+
+    train_step_pixel = len(codebook_indices) // pixel_BS
+
+    tfpix.model.fit(codebook_ds, steps_per_epoch=train_step_pixel)
+
+    tfpix.model.save("models/vq_vae_pixelcnn/tfdistpixel_cnn_mnist.h5")
 
 
-
+    # pixel_cnn=PixelCNN(input_dim=input_shape,n_embeddings=128,n_residual=2,n_convlayer=2)
+    # #pixel_cnn.build_model()
+    # opt=keras.optimizers.Adam(3e-3)
+    # pixel_cnn.compile(loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),optimizer=opt,metrics="accuracy")
+    #
+    #
+    # ##callbacks
+    #
+    # check=Save_PixelCNN_Weights(output_dir="models",outname="vq_vae_pixelcnn",endname="mnist")
+    #
+    # es=tf.keras.callbacks.EarlyStopping(
+    #     monitor="val_loss",
+    #     min_delta=0,
+    #     patience=5,
+    #     verbose=0,
+    #     mode="auto",
+    #     baseline=None,
+    #     restore_best_weights=True,
+    # )
+    #
+    #
+    # callbacks=[WandbCallback(),check,es]
+    #
+    # print()
+    #
+    # pixel_cnn.fit(codebook_indices,codebook_indices,batch_size=pixel_BS,validation_split=0.1,epochs=30,callbacks=callbacks)
+    #
+    #
+    # pixel_cnn.model.save("models/vq_vae_pixelcnn/final_pixelcnn_mnist_vqvae.h5")
