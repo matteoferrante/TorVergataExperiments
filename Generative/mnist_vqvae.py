@@ -159,52 +159,56 @@ elif args.phase==1:
 
     input_shape=(codebook_indices.shape[1],codebook_indices.shape[2])
 
+    pixel_cnn = PixelCNN(input_dim=input_shape, n_embeddings=128, n_residual=3, n_convlayer=2)
+    opt = keras.optimizers.Adam(3e-3)
+    pixel_cnn.compile(loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), optimizer=opt,metrics="accuracy")
+
+    es = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss",
+        min_delta=0,
+        patience=5,
+        verbose=0,
+        mode="auto",
+        baseline=None,
+        restore_best_weights=True,
+    )
+    callbacks = [WandbCallback(), es]
+
+
+    pixel_cnn.save_dict("models/vq_vae_pixelcnn/dict")
+
+    pixel_cnn.fit(codebook_indices, codebook_indices, batch_size=pixel_BS, validation_split=0.1, epochs=30,
+                  callbacks=callbacks)
+    pixel_cnn.model.save_weights("models/vq_vae_pixelcnn/final_pixelcnn_mnist_vqvae.h5")
+
+
+
+
+
+
+
+
+
+
+
     ## RIFACCIO CON TFDISTPIXELCNN
 
     ## PROVO CN TFPIXELCNN
 
-    tfpix = TfDistPixelCNN(num_hierarchies=1, num_filters=64)
-    tfpix.model.summary()
-    tfpix.compile()
+    # tfpix = TfDistPixelCNN(num_hierarchies=1, num_filters=64)
+    # tfpix.model.summary()
+    # tfpix.compile()
+    #
+    # pixel_BS = 1
+    #
+    # codebook_ds = tf.data.Dataset.from_tensor_slices((codebook_indices, codebook_indices))
+    # codebook_ds = codebook_ds.repeat().shuffle(1024).batch(pixel_BS)
+    #
+    # train_step_pixel = len(codebook_indices) // pixel_BS
+    #
+    # tfpix.model.fit(codebook_ds, steps_per_epoch=train_step_pixel)
+    #
+    # tfpix.model.save("models/vq_vae_pixelcnn/tfdistpixel_cnn_mnist.h5")
 
-    pixel_BS = 1
-
-    codebook_ds = tf.data.Dataset.from_tensor_slices((codebook_indices, codebook_indices))
-    codebook_ds = codebook_ds.repeat().shuffle(1024).batch(pixel_BS)
-
-    train_step_pixel = len(codebook_indices) // pixel_BS
-
-    tfpix.model.fit(codebook_ds, steps_per_epoch=train_step_pixel)
-
-    tfpix.model.save("models/vq_vae_pixelcnn/tfdistpixel_cnn_mnist.h5")
 
 
-    # pixel_cnn=PixelCNN(input_dim=input_shape,n_embeddings=128,n_residual=2,n_convlayer=2)
-    # #pixel_cnn.build_model()
-    # opt=keras.optimizers.Adam(3e-3)
-    # pixel_cnn.compile(loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),optimizer=opt,metrics="accuracy")
-    #
-    #
-    # ##callbacks
-    #
-    # check=Save_PixelCNN_Weights(output_dir="models",outname="vq_vae_pixelcnn",endname="mnist")
-    #
-    # es=tf.keras.callbacks.EarlyStopping(
-    #     monitor="val_loss",
-    #     min_delta=0,
-    #     patience=5,
-    #     verbose=0,
-    #     mode="auto",
-    #     baseline=None,
-    #     restore_best_weights=True,
-    # )
-    #
-    #
-    # callbacks=[WandbCallback(),check,es]
-    #
-    # print()
-    #
-    # pixel_cnn.fit(codebook_indices,codebook_indices,batch_size=pixel_BS,validation_split=0.1,epochs=30,callbacks=callbacks)
-    #
-    #
-    # pixel_cnn.model.save("models/vq_vae_pixelcnn/final_pixelcnn_mnist_vqvae.h5")

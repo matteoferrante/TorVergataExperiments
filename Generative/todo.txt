@@ -1,11 +1,19 @@
 #TODO
 
-- Train VQ-VAE
-- PixelCNN per campionare VQ-VAE
+- Train VQ-VAE: ok
+- PixelCNN per campionare VQ-VAE: ok
 
-- Conditional VQ-VAE?
+
+vqvqe.py allena vqvae e poi pixelcnn con phase 0 e 1)
+mnist_vqvae_sampling.py campiona le immagini una volta che sia vqvae sia pixelcnn sono stati allenati
+
+
+
+- Conditional VQ-VAE? OK
+    - Conditional PixelCNN su VQVAE normale è sufficiente? Ok su MNIST
 
 - VQ-VAE 2
+
 - NVAE
 
 - Growing GAN

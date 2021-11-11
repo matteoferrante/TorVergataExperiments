@@ -1,3 +1,5 @@
+import json
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import tensorflow_probability as tfp
@@ -13,6 +15,14 @@ tfk = tf.keras
 tfkl = tf.keras.layers
 
 ##TODO: fix PixelCNN sampling and dimensions when loeaded
+
+## THIS CODE HAS TWO PROBLEM.
+#       When using the tensorflow_probability implementation there are errors when bs>1 so its a very slow training
+#       When using the keras implementation if the model is saved and loaded there is a mismatch in the weights, so
+#       actually the only solution is to train the model, save the weights and the parameters used to instantiate the
+#       model and there reload both the model and the weights using load_weights.
+#       This is not an optimally solution but it works.
+#
 
 
 class TfDistPixelCNN:
@@ -153,6 +163,13 @@ class PixelCNN(keras.Model):
         self.model.build(input_shape=input_dim)
         print(self.model.summary())
 
+
+    def save_dict(self,path):
+        dictionary_data={"input_dim":self.input_dim,"num_embeddings":self.num_embeddings,"n_residual":self.n_residual,"n_convlayer":self.n_convlayer,"ksize":self.ksize}
+        a_file = open(path, "w")
+        json.dump(dictionary_data, a_file)
+        a_file.close()
+
     def build_pixelcnn(self):
         """build the model itself"""
 
@@ -193,6 +210,86 @@ class PixelCNN(keras.Model):
 
 
 
+class ConditionalPixelCNN(keras.Model):
+
+    """Class that extends keras model to implement PixelCNN autoregressive model
+    reference paper: https://arxiv.org/pdf/1606.05328.pdf
+
+    """
+
+    def __init__(self,input_dim=(7,7),n_embeddings=128,n_residual=5,n_convlayer=2,ksize=7,n_classes=10,cond_emb=50):
+        """
+
+        :param input_dim: input dimension (should be the same as the embedding space
+        :param n_embeddings: number of embeddings
+        :param n_residual: number of residual layers
+        :param n_convlayer: number of PixelConvLayer
+        :param ksize: kernel size of the input Layer
+        :param sampler: Model defined once pixelCnn is trained with build_sampler method
+
+        :param n_classes: int, number of possible conditions
+        :cond_emb: int, dimension of the learned embedding space for conditions
+        """
+        super(ConditionalPixelCNN, self).__init__()
+        self.input_dim=input_dim
+        self.num_embeddings=n_embeddings
+        self.n_residual=n_residual
+        self.n_convlayer=n_convlayer
+        self.ksize=ksize
+
+        self.n_classes=n_classes
+        self.cond_emb=cond_emb
+
+        self.model=self.build_pixelcnn()
+        self.model.build(input_shape=input_dim)
+        print(self.model.summary())
+
+
+    def build_pixelcnn(self):
+        """build the conditional model itself"""
+
+        inputs = keras.Input(shape=self.input_dim, dtype=tf.int32)
+        ohe = tf.one_hot(inputs, self.num_embeddings)
+
+        condition_input=Input(shape=(1,))                               #input for condition the class
+        con=Embedding(self.n_classes,self.cond_emb)(condition_input)
+        con=Dense(np.prod(self.input_dim))(con)
+        con = Reshape((self.input_dim[0], self.input_dim[1], 1))(con)                 #produce image compatible shapes
 
 
 
+
+        merge = Concatenate(axis=-1)([ohe, con])
+
+        x=PixelConvLayer(mask_type="A",filters=128,kernel_size=self.ksize,activation="relu",padding="same")(merge)
+
+        #add residual blocks
+        for _ in range(self.n_residual):
+            x=ResidualBlock(filters=128)(x)
+
+        #add pixelcnn
+        for _ in range(self.n_convlayer):
+            x=PixelConvLayer(mask_type="B",filters=128,kernel_size=1,strides=1,activation="relu",padding="valid")(x)
+
+        out=Conv2D(self.num_embeddings,kernel_size=1,strides=1,padding="valid")(x)
+
+        pixel_cnn=Model([inputs,condition_input],out)
+        return pixel_cnn
+
+
+    def call(self,x, *args, **kwargs):
+        """
+        :param x: x should be a tuple (codebook, condition)
+        :return: output of the model
+        """
+        return self.model(x)
+
+    def save_dict(self,path):
+        dictionary_data={"input_dim":self.input_dim,"num_embeddings":self.num_embeddings,
+                         "n_residual":self.n_residual,"n_convlayer":self.n_convlayer,
+                         "ksize":self.ksize, "n_classes":self.n_classes,
+                         "cond_emb":self.cond_emb
+                         }
+        a_file = open(path, "w")
+        json.dump(dictionary_data, a_file)
+        a_file.close()

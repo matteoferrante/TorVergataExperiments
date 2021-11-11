@@ -226,6 +226,7 @@ class Save_PixelCNN_Weights(keras.callbacks.Callback):
 
 
 
+
 class WandbImagesVQVAE(keras.callbacks.Callback):
     """
     A custom Callback to produce a grid of images in wandb for VAE
