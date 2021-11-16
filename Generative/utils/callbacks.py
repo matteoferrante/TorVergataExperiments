@@ -189,7 +189,6 @@ class Save_VQVAE_Weights(keras.callbacks.Callback):
 
 
 
-
 class Save_PixelCNN_Weights(keras.callbacks.Callback):
 
     def __init__(self, output_dir,outname,endname="mnist"):
@@ -222,6 +221,45 @@ class Save_PixelCNN_Weights(keras.callbacks.Callback):
         json_dict=self.model.to_json()
         with open(opj(self.outdir,f"pixel_cnn_{self.endname}.json"), 'w', encoding='utf-8') as f:
             json.dump(json_dict, f)
+
+
+
+class Save_VQVAE2_Weights(keras.callbacks.Callback):
+    """Class to save vqvae2 weights"""
+
+    def __init__(self, output_dir,outname,endname="mnist"):
+        """
+
+        :param output_dir: name of the output directory
+        :param outname: name of subdirectory to create used to save encoder, emebeddings and decoder
+        :param endname: usually the name of the dataset, used as end part of the saved name.
+        (for example end name: mnist -> files are saved as encoder_mnist.h5, embeddings_mnist.h5 and decoder_mnist.h5)
+        """
+        super().__init__()
+        self.outdir=opj(output_dir,outname)
+        self.endname=endname
+        os.makedirs(self.outdir,exist_ok=True)
+
+
+    def on_epoch_end(self, epoch,logs=None):
+
+        self.model.encoder_b.save_weights(opj(self.outdir,f"vq_vae2_encoder_b_{self.endname}.h5"))
+        self.model.encoder_t.save_weights(opj(self.outdir, f"vq_vae2_encoder_t_{self.endname}.h5"))
+
+        self.model.conditional_bottom.save_weights(opj(self.outdir, f"vq_vae2_encoder_conditional_bottom_{self.endname}.h5"))
+
+        self.model.decoder.save_weights(opj(self.outdir,f"vq_vae2_decoder_{self.endname}.h5"))
+
+
+    def on_train_end(self, logs=None):
+        emb_b=self.model.quantizer_b.get_weights()
+
+        emb_t=self.model.quantizer_t.get_weights()
+
+        np.save(opj(self.outdir,f"vq_vae_embeddings_bottom_{self.endname}.npy"),emb_b)
+        np.save(opj(self.outdir,f"vq_vae_embeddings_top_{self.endname}.npy"),emb_t)
+
+
 
 
 
@@ -265,6 +303,42 @@ class WandbImagesVQVAE(keras.callbacks.Callback):
 
             #TODO: use pixelCNN to sample the prior over the codebook
             pass
+
+
+
+class WandbImagesVQVAE2(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb for VAE
+    """
+
+    def __init__(self, validation_data,sample=None,pixel_cnn=None):
+
+        """
+
+        :param validation_data: dataset of images, data to reconstruct
+        """
+        super().__init__()
+        self.validation_data = validation_data
+
+    def on_epoch_end(self, epoch, logs=None):
+
+
+        if self.validation_data:
+            x=next(iter(self.validation_data))
+            x_recon=self.model.vqvae(x)
+
+            x_recon=x_recon[:100] ## use more than 100 in bS
+
+            images = x_recon.numpy() * 255.
+
+            #images = np.repeat(images, 3, axis=-1)
+            vis = build_montages(images, (28, 28), (10, 10))[0]
+
+            log={f"image":wandb.Image(vis)}
+            wandb.log(log)
+        else:
+            print(f"No validation data {self.validation_data}")
+
 
 
 

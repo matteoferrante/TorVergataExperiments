@@ -1,0 +1,16 @@
+
+
+
+
+mnist_vqvae serve per allenare il modello VQ e la pixelCNN per campionarlo
+mnist_vqvae_sampling serve per campionare il modello VQ già allenato con la pixelCNN già allenata
+
+mnist_vqvae_train_conditional_pixelcnn serve per allenare una conditional pixelCNN e quindi trasformare
+VQ_VAE in cVQVAE
+
+mnist_cvqvae_sampling serve per campionare il modello vq vae già allenato con la conditional pixelcnn
+già allenata
+
+cifar_vqqvae2 serve per allenare vq vae 2 e relativa conditional pixel cnn (qua non si può fare senza conditional)
+
+

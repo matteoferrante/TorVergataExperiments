@@ -19,6 +19,25 @@ def map_vqvae_weights(model_dir):
             d["embeddings"]=opj(model_dir,f)
     return d
 
+def map_vqvae2_weights(model_dir):
+    files=os.listdir(model_dir)
+    d={}
+    for f in files:
+        if "encoder_b" in f:
+            d["encoder_b"]=opj(model_dir,f)
+        elif "encoder_t" in f:
+            d["encoder_t"] = opj(model_dir, f)
+        elif "conditional_bottom" in f:
+            d["conditional_bottom"]=opj(model_dir,f)
+        elif ("generator" in f) or ("decoder" in f):
+            d["decoder"]=opj(model_dir,f)
+        elif "embeddings_bottom" in f:
+            d["embeddings_bottom"]=opj(model_dir,f)
+        elif "embeddings_top" in f:
+            d["embeddings_top"]=opj(model_dir,f)
+    return d
+
+
 
 
 def pixelcnn_sample_vqvae(n,pixel_cnn,vqvae):
