@@ -35,7 +35,7 @@ x_test=x_test.astype("float32")/255.
 NOISE_DIM = 128
 # Set the number of batches, epochs and steps for trainining.
 # Look 800k images(16x50x1000) per each lavel
-EPOCHS_PER_RES = 1
+EPOCHS_PER_RES = 16
 
 
 ## INIT
