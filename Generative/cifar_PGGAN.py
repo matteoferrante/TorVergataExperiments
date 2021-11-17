@@ -120,4 +120,4 @@ for n_depth in range(1, 4):
   pgan.compile(d_optimizer=discriminator_optimizer,g_optimizer=generator_optimizer,)
   # Train stabilized generator and discriminator
   pgan.fit(train_dataset, steps_per_epoch = ts, epochs = EPOCHS_PER_RES, callbacks=callbacks)
-  pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_{pgan.n_depth}_weights_cifar.h5"))
+  pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_{pgan.n_depth}_stabilized_weights_cifar.h5"))
