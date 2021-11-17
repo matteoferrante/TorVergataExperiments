@@ -1,12 +1,20 @@
 import tensorflow as tf
-from keras.initializers.initializers_v1 import RandomNormal
-from keras.testing_utils import Bias
+from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras.layers import *
 import tensorflow.keras as keras
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
+
+
+class Bias(Layer):
+
+  def build(self, input_shape):
+    self.bias = self.add_variable('bias', (1,), initializer='zeros')
+
+  def call(self, inputs):
+    return inputs + self.bias
 
 class WeightedSum(Add):
     def __init__(self, alpha=0.0, **kwargs):
