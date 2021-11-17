@@ -55,6 +55,28 @@ class WandbImagesConditionalGAN(keras.callbacks.Callback):
 
 
 
+class WandbImagesPGGAN(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb
+    """
+
+    def on_epoch_end(self, epoch, logs=None):
+
+        random_latent_vectors = tf.random.normal(shape=(100, self.model.latent_dim))
+        generated_images = self.model.generator(random_latent_vectors)
+
+        images = generated_images*255.
+        #images = np.repeat(images, 3, axis=-1)
+
+        act_dim=generated_images.shape[1]
+        vis = build_montages(images, (act_dim,act_dim), (10, 10))[0]
+
+        log={f"image_sampled{self.model.n_depth}":wandb.Image(vis)}
+        wandb.log(log)
+
+
+
+
 class WandbImagesVAE(keras.callbacks.Callback):
     """
     A custom Callback to produce a grid of images in wandb for VAE
