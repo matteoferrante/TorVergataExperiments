@@ -17,7 +17,7 @@ wandb.login()
 checkpoint_path="models/PGGAN"
 config={"dataset":"cifar", "type":"PG-GAN"}
 
-wandb.init(project="TorVergataExperiment-Generative",config=config,mode="disabled")
+wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 
 BS_list = [128,64,32,16]
