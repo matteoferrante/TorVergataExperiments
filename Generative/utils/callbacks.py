@@ -64,11 +64,13 @@ class WandbImagesPGGAN(keras.callbacks.Callback):
 
         random_latent_vectors = tf.random.normal(shape=(100, self.model.latent_dim))
         generated_images = self.model.generator(random_latent_vectors)
+        images = generated_images.numpy() * 255.
 
-        images = generated_images*255.
+
         #images = np.repeat(images, 3, axis=-1)
 
         act_dim=4*(self.model.n_depth+1)
+
         vis = build_montages(images, (act_dim,act_dim), (10, 10))[0]
 
         log={f"image_sampled{self.model.n_depth}":wandb.Image(vis)}

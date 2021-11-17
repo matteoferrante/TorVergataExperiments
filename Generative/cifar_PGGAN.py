@@ -20,7 +20,7 @@ config={"dataset":"cifar", "type":"PG-GAN"}
 wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 
-BS_list = [128,64,32,16]
+BS_list = [256,128,64,32]
 
 BS=BS_list[0]
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
@@ -35,7 +35,7 @@ x_test=x_test.astype("float32")/255.
 NOISE_DIM = 128
 # Set the number of batches, epochs and steps for trainining.
 # Look 800k images(16x50x1000) per each lavel
-EPOCHS_PER_RES = 16
+EPOCHS_PER_RES = 1
 
 
 ## INIT
@@ -56,18 +56,18 @@ pgan = PGGAN(
     d_steps = 1,
 )
 
-callbacks=[WandbCallback(),WandbImagesPGGAN()]
+callbacks=[WandbImagesPGGAN(),WandbCallback()]
 
 pgan.compile(
     d_optimizer=discriminator_optimizer,
     g_optimizer=generator_optimizer,
 )
 
+os.makedirs(checkpoint_path,exist_ok=True)
 # Start training the initial generator and discriminator
 pgan.fit(train_dataset, steps_per_epoch = ts, epochs = EPOCHS_PER_RES, callbacks=callbacks)
-pgan.save_weights(opj(checkpoint_path,f"checkpoint_path_ndepth_0_weights_cifar.h5"))
+pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_{pgan.n_depth}_weights_cifar.h5"))
 
-os.makedirs(checkpoint_path,exist_ok=True)
 tf.keras.utils.plot_model(pgan.generator, to_file=opj(checkpoint_path,f'generator_{pgan.n_depth}.png'), show_shapes=True)
 tf.keras.utils.plot_model(pgan.discriminator, to_file=opj(checkpoint_path,f'discriminator_{pgan.n_depth}.png'), show_shapes=True)
 
@@ -82,7 +82,7 @@ for n_depth in range(1, 4):
   pgan.n_depth = n_depth
 
   new_dim=(pgan.n_depth+1)*4
-  new_dim=(new_dim,new_dim,3)
+  new_dim=(new_dim,new_dim)
 
   ##dataset redefinition
   BS=BS_list[n_depth]
@@ -106,7 +106,7 @@ for n_depth in range(1, 4):
   )
   # Train fade in generator and discriminator
   pgan.fit(train_dataset, steps_per_epoch=ts, epochs=EPOCHS_PER_RES, callbacks=callbacks)
-  pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_{pgan.n_depth}_weights_cifar.h5"))
+  pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_{n_depth}_weights_cifar.h5"))
 
 
   print(f"[INFO] Stabilizing phase for {n_depth}")

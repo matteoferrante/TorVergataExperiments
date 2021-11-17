@@ -20,7 +20,7 @@ class WeightedSum(Add):
     def __init__(self, alpha=0.0, **kwargs):
         """Layer used in fading phase while growing"""
         super(WeightedSum, self).__init__(**kwargs)
-        self.alpha = tf.variable(alpha, name='ws_alpha')
+        self.alpha = K.variable(alpha, name='ws_alpha')
 
     def _merge_function(self, inputs):
         assert (len(inputs) == 2)
@@ -141,7 +141,7 @@ class PGGAN(keras.Model):
         self.discriminator=self.init_discriminator()
         self.discriminator_wt_fade=None
         self.generator=self.init_generator()
-
+        self.n_depth=0
 
 
     def init_generator(self):
@@ -226,8 +226,8 @@ class PGGAN(keras.Model):
         input_shape = list(self.discriminator.input.shape)
         # 1. Double the input resolution.
         input_shape = (input_shape[1]*2, input_shape[2]*2, input_shape[3])
-        img_input = Input(shape = input_shape)
-        img_input = tf.cast(img_input, tf.float32)
+        img_input = Input(shape = input_shape,dtype=tf.float32)
+        #img_input = tf.cast(img_input, tf.float32)
 
         # 2. Add pooling layer
         #    Reuse the existing “formRGB” block defined as “x1".
