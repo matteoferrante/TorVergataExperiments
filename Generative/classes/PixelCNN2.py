@@ -91,7 +91,7 @@ class ConditionalPixelCNN2(keras.Model):
 
     """
 
-    def __init__(self,input_top_dim=(4,4),input_bottom_dim=(8,8),n_embeddings=128,n_residual=5,n_convlayer=2,ksize=7,n_classes=10,cond_emb=50):
+    def __init__(self,input_top_dim=(4,4),input_bottom_dim=(8,8),num_embeddings=128,n_residual=5,n_convlayer=2,ksize=7,n_classes=10,cond_emb=50):
         """
 
         :param input_dim: input dimension (should be the same as the embedding space
@@ -108,7 +108,7 @@ class ConditionalPixelCNN2(keras.Model):
         self.input_top_dim=input_top_dim
         self.input_bottom_dim = input_bottom_dim
 
-        self.num_embeddings=n_embeddings
+        self.num_embeddings=num_embeddings
         self.n_residual=n_residual
         self.n_convlayer=n_convlayer
         self.ksize=ksize
