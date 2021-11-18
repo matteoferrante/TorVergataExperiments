@@ -1,4 +1,5 @@
 import os
+import sys
 
 import tensorflow as tf
 import numpy as np
@@ -42,8 +43,8 @@ EPOCHS_PER_RES = 16
 
 ## INIT
 
-def resize(img,target_size=(4,4)):
-    return tf.image.resize(img,target_size)
+def resize(x,y,target_size=(4,4)):
+    return tf.image.resize(x,target_size),y
 
 train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(resize)
@@ -67,11 +68,14 @@ pgan.compile(
 
 os.makedirs(checkpoint_path,exist_ok=True)
 # Start training the initial generator and discriminator
-pgan.fit(train_dataset, steps_per_epoch = ts, epochs = EPOCHS_PER_RES, callbacks=callbacks)
-pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_0_weights_cifar.h5"))
 
 tf.keras.utils.plot_model(pgan.generator, to_file=opj(checkpoint_path,f'generator_{pgan.n_depth}.png'), show_shapes=True)
 tf.keras.utils.plot_model(pgan.discriminator, to_file=opj(checkpoint_path,f'discriminator_{pgan.n_depth}.png'), show_shapes=True)
+
+
+pgan.fit(train_dataset, steps_per_epoch = ts, epochs = EPOCHS_PER_RES, callbacks=callbacks)
+pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_0_weights_cifar.h5"))
+
 
 
 # Train faded-in / stabilized generators and discriminators
@@ -91,7 +95,7 @@ for n_depth in range(1, 4):
   ts = len(x_train) // BS
   train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
 
-  train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(lambda  x: resize(x,new_dim))
+  train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(lambda  x,y: resize(x,y,new_dim))
 
   #enlarge network
 

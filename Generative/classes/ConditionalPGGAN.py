@@ -166,13 +166,13 @@ class CPGGAN(keras.Model):
         noise = Input(shape=(self.latent_dim,))
 
         in_label=Input(shape=(1,))                                  #input for condition the class
-        li=Embedding(self.n_classes,self.emb_dim)(in_label)              #li stands for label input
+        li=Embedding(self.num_classes,self.emb_dim)(in_label)              #li stands for label input
         li=Dense(self.latent_dim)(li)
-        #li = Reshape(input_shape)(li)                              #produce image compatible shapes
+        li = Reshape(target_shape=(self.latent_dim,))(li)                              #produce image compatible shapes
 
 
 
-        merge=Concatenate()[noise,li]
+        merge=Concatenate()([noise,li])
 
         x = PixelNormalization()(merge)
         # Actual size(After doing reshape) is just FILTERS[0], so divide gain by 4
@@ -192,17 +192,18 @@ class CPGGAN(keras.Model):
 
     def init_discriminator(self):
 
+        img_input = Input(shape=self.start_dim, dtype=tf.float32)
+
         ## label input
 
-        in_label=Input(shape=(1,))                  #input for condition the class
-        li=Embedding(self.n_classes,self.emb_dim)(in_label)              #li stands for label input
+        in_label=Input(shape=(1,),dtype=tf.uint8)                      #input for condition the class
+        li=Embedding(self.num_classes,self.emb_dim)(in_label)              #li stands for label input
         li=Dense(np.prod(self.start_dim))(li)
-        li = Reshape(self.start_dim)(li)        #produce image compatible shapes
+
+        li = Reshape((self.start_dim[0], self.start_dim[1], self.outchannels))(li) #produce image compatible shapes
 
 
-        img_input = Input(shape=self.start_dim,dtype=tf.float32)
-
-        merge=Concatenate()[img_input,li]
+        merge=Concatenate()([img_input,li])
 
         #img_input = tf.cast(img_input, tf.float32)
         # fromRGB
@@ -268,14 +269,14 @@ class CPGGAN(keras.Model):
         input_shape = (input_shape[1]*2, input_shape[2]*2, input_shape[3])
         img_input = Input(shape = input_shape,dtype=tf.float32)
 
-        in_label=Input(shape=(1,))                  #input for condition the class
-        li=Embedding(self.n_classes,self.emb_dim)(in_label)              #li stands for label input
+        in_label=Input(shape=(1,),dtype=tf.uint8)                  #input for condition the class
+        li=Embedding(self.num_classes,self.emb_dim)(in_label)              #li stands for label input
         li=Dense(np.prod(input_shape))(li)
         li = Reshape(input_shape)(li)        #produce image compatible shapes
 
 
 
-        merge=Concatenate()[img_input,li]
+        merge=Concatenate()([img_input,li])
 
 
         #img_input = tf.cast(img_input, tf.float32)
@@ -335,6 +336,9 @@ class CPGGAN(keras.Model):
         This loss is calculated on an interpolated image
         and added to the discriminator loss.
         """
+
+
+
         # Get the interpolated image
         alpha = tf.random.uniform(shape=[batch_size, 1, 1, 1], minval=0.0, maxval=1.0)
         diff = fake_images - real_images
@@ -352,12 +356,20 @@ class CPGGAN(keras.Model):
         gp = tf.reduce_mean((norm - 1.0) ** 2)
         return gp
 
-    def train_step(self, real_images):
-        if isinstance(real_images, tuple):
-            real_images = real_images[0]
+    def train_step(self, data):
 
+        print(f"[DEBUG 0 ] {len(data)}")
+        #if isinstance(real_images, tuple):
+        real_images = data[0]
+        real_conditions=data[1]
+
+        print(f"[DEBUG] {real_images} e poi {real_conditions}")
+
+        #print(f"[DEBUG] {real_images.shape} {real_conditions.shape}")
         # Get the batch size
         batch_size = tf.shape(real_images)[0]
+
+
         # For each batch, we are going to perform the
         # following steps as laid out in the original paper:
         # 1. Train the generator and get the generator loss
@@ -374,26 +386,28 @@ class CPGGAN(keras.Model):
         for i in range(self.d_steps):
             # Get the latent vector
             random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
+            random_conditions = tf.random.uniform(shape=[batch_size, ], minval=0, maxval=self.num_classes, dtype=tf.int32)
 
             with tf.GradientTape() as tape:
                 # Generate fake images from the latent vector
-                fake_images = self.generator(random_latent_vectors, training=True)
+                fake_images = self.generator([random_latent_vectors,random_conditions], training=True)
                 # Get the logits for the fake images
-                fake_logits = self.discriminator(fake_images, training=True)
+                fake_logits = self.discriminator([fake_images,random_conditions], training=True)
                 # Get the logits for the real images
-                real_logits = self.discriminator(real_images, training=True)
+                real_logits = self.discriminator([real_images,real_conditions], training=True)
 
                 # Calculate the discriminator loss using the fake and real image logits
                 d_cost = tf.reduce_mean(fake_logits) - tf.reduce_mean(real_logits)
 
                 # Calculate the gradient penalty
-                gp = self.gradient_penalty(batch_size, real_images, fake_images)
+                #gp = self.gradient_penalty(batch_size, real_images, fake_images)
 
                 # Calculate the drift for regularization
                 drift = tf.reduce_mean(tf.square(real_logits))
 
                 # Add the gradient penalty to the original discriminator loss
-                d_loss = d_cost + self.gp_weight * gp + self.drift_weight * drift
+                #d_loss = d_cost + self.gp_weight * gp + self.drift_weight * drift
+                d_loss = d_cost + self.drift_weight * drift
 
             # Get the gradients w.r.t the discriminator loss
             d_gradient = tape.gradient(d_loss, self.discriminator.trainable_variables)
@@ -403,11 +417,13 @@ class CPGGAN(keras.Model):
         # Train the generator
         # Get the latent vector
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
+        random_conditions = tf.random.uniform(shape=[batch_size, ], minval=0, maxval=self.num_classes, dtype=tf.int32)
+
         with tf.GradientTape() as tape:
             # Generate fake images using the generator
-            generated_images = self.generator(random_latent_vectors, training=True)
+            generated_images = self.generator([random_latent_vectors,random_conditions], training=True)
             # Get the discriminator logits for fake images
-            gen_img_logits = self.discriminator(generated_images, training=True)
+            gen_img_logits = self.discriminator([generated_images,random_conditions], training=True)
             # Calculate the generator loss
             g_loss = -tf.reduce_mean(gen_img_logits)
         # Get the gradients w.r.t the generator loss
