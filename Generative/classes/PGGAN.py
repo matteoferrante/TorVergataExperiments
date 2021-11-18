@@ -9,12 +9,22 @@ from tensorflow.keras import backend as K
 
 
 class Bias(Layer):
+    def __init__(self, **kwargs):
+        super(Bias, self).__init__(**kwargs)
 
-  def build(self, input_shape):
-    self.bias = self.add_weight('bias', (1,), initializer='zeros')
+    def build(self, input_shape):
+        b_init = tf.zeros_initializer()
+        self.bias = tf.Variable(initial_value=b_init(shape=(input_shape[-1],), dtype='float32'), trainable=True)
 
-  def call(self, inputs):
-    return inputs + self.bias
+    def call(self, inputs, **kwargs):
+        return inputs + self.bias
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+    def get_config(self):
+        config = super().get_config().copy()
+        return config
+
 
 class WeightedSum(Add):
     def __init__(self, alpha=0.0, **kwargs):
@@ -26,6 +36,11 @@ class WeightedSum(Add):
         assert (len(inputs) == 2)
         output = ((1.0 - self.alpha) * inputs[0] + (self.alpha * inputs[1]))
         return output
+
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({"alpha": self.alpha})
+        return config
 
 
 class MinibatchStdev(Layer):
@@ -48,6 +63,10 @@ class MinibatchStdev(Layer):
         input_shape[-1] += 1
         return tuple(input_shape)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        return config
+
 
 class WeightScaling(Layer):
     """Weights initialization"""
@@ -64,6 +83,11 @@ class WeightScaling(Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape
+
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({"wscale": self.wscale})
+        return config
 
 
 def WeightScalingDense(x, filters, gain, use_pixelnorm=False, activate=None):
@@ -116,6 +140,9 @@ class PixelNormalization(Layer):
     def compute_output_shape(self, input_shape):
         return input_shape
 
+    def get_config(self):
+        config = super().get_config().copy()
+        return config
 
 
 class PGGAN(keras.Model):

@@ -35,7 +35,7 @@ x_test=x_test.astype("float32")/255.
 NOISE_DIM = 128
 # Set the number of batches, epochs and steps for trainining.
 # Look 800k images(16x50x1000) per each lavel
-EPOCHS_PER_RES = 1
+EPOCHS_PER_RES = 16
 
 
 ## INIT
@@ -81,7 +81,7 @@ for n_depth in range(1, 4):
   # Set current level(depth)
   pgan.n_depth = n_depth
 
-  new_dim=(pgan.n_depth+1)*4
+  new_dim=2**(n_depth)*4
   new_dim=(new_dim,new_dim)
 
   ##dataset redefinition
@@ -106,8 +106,9 @@ for n_depth in range(1, 4):
   )
   # Train fade in generator and discriminator
   pgan.fit(train_dataset, steps_per_epoch=ts, epochs=EPOCHS_PER_RES, callbacks=callbacks)
-  pgan.generator.save(opj(checkpoint_path, f"generator_ndepth_{n_depth}_model_cifar.h5"))
-  pgan.discriminator.save(opj(checkpoint_path, f"discriminator_ndepth_{n_depth}_model_cifar.h5"))
+
+  pgan.generator.save_weights(opj(checkpoint_path, f"generator_ndepth_{n_depth}_weights_cifar.h5"))
+  pgan.discriminator.save_weights(opj(checkpoint_path, f"discriminator_ndepth_{n_depth}_weights_cifar.h5"))
 
   try:
       pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_{n_depth}_weights_cifar.ckpt"),save_format="tf")
@@ -126,8 +127,8 @@ for n_depth in range(1, 4):
   pgan.compile(d_optimizer=discriminator_optimizer,g_optimizer=generator_optimizer,)
   # Train stabilized generator and discriminator
   pgan.fit(train_dataset, steps_per_epoch = ts, epochs = EPOCHS_PER_RES, callbacks=callbacks)
-  pgan.generator.save(opj(checkpoint_path, f"generator_stabilized_ndepth_{n_depth}_model_cifar.h5"))
-  pgan.discriminator.save(opj(checkpoint_path, f"discriminator_stabilized_ndepth_{n_depth}_model_cifar.h5"))
+  pgan.generator.save_weights(opj(checkpoint_path, f"generator_stabilized_ndepth_{n_depth}_weights_cifar.h5"))
+  pgan.discriminator.save_weights(opj(checkpoint_path, f"discriminator_stabilized_ndepth_{n_depth}_weights_cifar.h5"))
 
   try:
       pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_stabilized_ndepth_{n_depth}_weights_cifar.ckpt"), save_format="tf")
