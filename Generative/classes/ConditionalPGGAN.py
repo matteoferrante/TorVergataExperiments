@@ -11,13 +11,6 @@ from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
 
 
-class Bias(Layer):
-
-  def build(self, input_shape):
-    self.bias = self.add_weight('bias', (1,), initializer='zeros')
-
-  def call(self, inputs):
-    return inputs + self.bias
 
 class WeightedSum(Add):
     def __init__(self, alpha=0.0, **kwargs):
@@ -30,6 +23,28 @@ class WeightedSum(Add):
         output = ((1.0 - self.alpha) * inputs[0] + (self.alpha * inputs[1]))
         return output
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({"alpha": self.alpha})
+        return config
+
+
+class Bias(Layer):
+    def __init__(self, **kwargs):
+        super(Bias, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        b_init = tf.zeros_initializer()
+        self.bias = tf.Variable(initial_value=b_init(shape=(input_shape[-1],), dtype='float32'), trainable=True)
+
+    def call(self, inputs, **kwargs):
+        return inputs + self.bias
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+    def get_config(self):
+        config = super().get_config().copy()
+        return config
 
 class MinibatchStdev(Layer):
     """layer that help to contrast model collapse, computing statistics also coming from the minibatch"""
@@ -151,7 +166,7 @@ class CPGGAN(keras.Model):
         noise = Input(shape=(self.latent_dim,))
 
         in_label=Input(shape=(1,))                                  #input for condition the class
-        li=Embedding(n_classes,self.emb_dim)(in_label)              #li stands for label input
+        li=Embedding(self.n_classes,self.emb_dim)(in_label)              #li stands for label input
         li=Dense(self.latent_dim)(li)
         #li = Reshape(input_shape)(li)                              #produce image compatible shapes
 
@@ -171,7 +186,7 @@ class CPGGAN(keras.Model):
         # Gain should be 1, cos it's a last layer
         x = WeightScalingConv(x, filters=3, kernel_size=(1,1), gain=1., activate='tanh', use_pixelnorm=False)
 
-        g_model = Model(noise, x, name='generator')
+        g_model = Model([noise,in_label], x, name='generator')
         g_model.summary()
         return g_model
 
@@ -180,7 +195,7 @@ class CPGGAN(keras.Model):
         ## label input
 
         in_label=Input(shape=(1,))                  #input for condition the class
-        li=Embedding(n_classes,self.emb_dim)(in_label)              #li stands for label input
+        li=Embedding(self.n_classes,self.emb_dim)(in_label)              #li stands for label input
         li=Dense(np.prod(self.start_dim))(li)
         li = Reshape(self.start_dim)(li)        #produce image compatible shapes
 
@@ -203,7 +218,7 @@ class CPGGAN(keras.Model):
         # Gain should be 1, cos it's a last layer
         x = WeightScalingDense(x, filters=1, gain=1.)
 
-        d_model = Model(img_input, x, name='discriminator')
+        d_model = Model([img_input,in_label], x, name='discriminator')
 
         return d_model
 
@@ -254,7 +269,7 @@ class CPGGAN(keras.Model):
         img_input = Input(shape = input_shape,dtype=tf.float32)
 
         in_label=Input(shape=(1,))                  #input for condition the class
-        li=Embedding(n_classes,self.emb_dim)(in_label)              #li stands for label input
+        li=Embedding(self.n_classes,self.emb_dim)(in_label)              #li stands for label input
         li=Dense(np.prod(input_shape))(li)
         li = Reshape(input_shape)(li)        #produce image compatible shapes
 
@@ -288,12 +303,12 @@ class CPGGAN(keras.Model):
         # Define stabilized(c. state) discriminator
         for i in range(5, len(self.discriminator.layers)):
             x2 = self.discriminator.layers[i](x2)
-        self.discriminator_stabilize = Model(img_input, x2, name='discriminator')
+        self.discriminator_stabilize = Model([img_input,in_label], x2, name='discriminator')
 
         # 5. Add existing discriminator layers.
         for i in range(5, len(self.discriminator.layers)):
             x = self.discriminator.layers[i](x)
-        self.discriminator = Model(img_input, x, name='discriminator')
+        self.discriminator = Model([img_input,in_label], x, name='discriminator')
 
         self.discriminator.summary()
 
@@ -311,7 +326,7 @@ class CPGGAN(keras.Model):
 
 
     def compile(self, d_optimizer, g_optimizer):
-        super(PGGAN, self).compile()
+        super(CPGGAN, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
 
