@@ -262,11 +262,13 @@ class CPGGAN(keras.Model):
 
     # Fade in upper resolution block
     def fade_in_discriminator(self):
+
+
         #for layer in self.discriminator.layers:
         #    layer.trainable = False
-        input_shape = list(self.discriminator.input.shape)
+        input_img_shape = self.discriminator.input[0].shape
         # 1. Double the input resolution.
-        input_shape = (input_shape[1]*2, input_shape[2]*2, input_shape[3])
+        input_shape = (input_img_shape[1]*2, input_img_shape[2]*2, input_img_shape[3])
         img_input = Input(shape = input_shape,dtype=tf.float32)
 
         in_label=Input(shape=(1,),dtype=tf.uint8)                  #input for condition the class
@@ -284,14 +286,16 @@ class CPGGAN(keras.Model):
         # 2. Add pooling layer
         #    Reuse the existing “formRGB” block defined as “x1".
         x1 = AveragePooling2D()(merge)
-        x1 = self.discriminator.layers[1](x1) # Conv2D FromRGB
-        x1 = self.discriminator.layers[2](x1) # WeightScalingLayer
-        x1 = self.discriminator.layers[3](x1) # Bias
-        x1 = self.discriminator.layers[4](x1) # LeakyReLU
+
+        x1 = self.discriminator.layers[6](x1) # Conv2D FromRGB
+        x1 = self.discriminator.layers[7](x1) # WeightScalingLayer
+        x1 = self.discriminator.layers[8](x1) # Bias
+        x1 = self.discriminator.layers[9](x1) # LeakyReLU
 
         # 3.  Define a "fade in" block (x2) with a new "fromRGB" and two 3x3 convolutions.
         #     Add an AveragePooling2D layer
-        x2 = WeightScalingConv(img_input, filters=self.filters[self.n_depth], kernel_size=(1,1), gain=np.sqrt(2), activate='LeakyReLU')
+
+        x2 = WeightScalingConv(merge, filters=self.filters[self.n_depth], kernel_size=(1,1), gain=np.sqrt(2), activate='LeakyReLU')
 
         x2 = WeightScalingConv(x2, filters=self.filters[self.n_depth], kernel_size=(3,3), gain=np.sqrt(2), activate='LeakyReLU')
         x2 = WeightScalingConv(x2, filters=self.filters[self.n_depth-1], kernel_size=(3,3), gain=np.sqrt(2), activate='LeakyReLU')
@@ -302,12 +306,13 @@ class CPGGAN(keras.Model):
         x = WeightedSum()([x1, x2])
 
         # Define stabilized(c. state) discriminator
-        for i in range(5, len(self.discriminator.layers)):
+        for i in range(10, len(self.discriminator.layers)):
             x2 = self.discriminator.layers[i](x2)
+
         self.discriminator_stabilize = Model([img_input,in_label], x2, name='discriminator')
 
         # 5. Add existing discriminator layers.
-        for i in range(5, len(self.discriminator.layers)):
+        for i in range(10, len(self.discriminator.layers)):
             x = self.discriminator.layers[i](x)
         self.discriminator = Model([img_input,in_label], x, name='discriminator')
 
@@ -358,14 +363,13 @@ class CPGGAN(keras.Model):
 
     def train_step(self, data):
 
-        print(f"[DEBUG 0 ] {len(data)}")
+
         #if isinstance(real_images, tuple):
         real_images = data[0]
         real_conditions=data[1]
 
-        print(f"[DEBUG] {real_images} e poi {real_conditions}")
 
-        #print(f"[DEBUG] {real_images.shape} {real_conditions.shape}")
+
         # Get the batch size
         batch_size = tf.shape(real_images)[0]
 

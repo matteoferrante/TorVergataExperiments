@@ -6,7 +6,7 @@ import numpy as np
 import glob
 import argparse
 from classes.ConditionalPGGAN import CPGGAN
-from utils.callbacks import WandbImagesPGGAN
+from utils.callbacks import WandbImagesPGGAN, WandbImagesCPGGAN
 import wandb
 import tensorflow.keras as keras
 from os.path import join as opj
@@ -23,7 +23,7 @@ config={"dataset":"cifar", "type":"CPG-GAN"}
 wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 
-BS_list = [256,128,64,32]
+BS_list = [256,64,64,32]
 
 BS=BS_list[0]
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
@@ -59,7 +59,7 @@ pgan = CPGGAN(
     d_steps = 1,
 )
 
-callbacks=[WandbImagesPGGAN(),WandbCallback()]
+callbacks=[WandbImagesCPGGAN(),WandbCallback()]
 
 pgan.compile(
     d_optimizer=discriminator_optimizer,
@@ -93,7 +93,7 @@ for n_depth in range(1, 4):
   ##dataset redefinition
   BS=BS_list[n_depth]
   ts = len(x_train) // BS
-  train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
+  train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
 
   train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(lambda  x,y: resize(x,y,new_dim))
 
