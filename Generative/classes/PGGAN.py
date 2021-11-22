@@ -147,12 +147,29 @@ class PixelNormalization(Layer):
 
 class PGGAN(keras.Model):
 
-    """Progressive growing GANs based on https://github.com/fabulousjeong/pggan-tensorflow/blob/main/pgan.py"""
+    """Progressive growing GANs based on https://github.com/fabulousjeong/pggan-tensorflow/blob/main/pgan.py
+
+    This is a class for progressive growing gans
+
+    The idea is to init both a tiny generator and discriminator with a start_dim very low
+
+
+    """
 
 
     def __init__(self, start_dim=4,latent_dim=100,n_block=4,outchannels=3 ,d_steps=1,
         gp_weight=10.0,
         drift_weight=0.001,):
+        """
+
+        :param start_dim: int, init dimension
+        :param latent_dim: int, latent dimension
+        :param n_block: int,number of convolutional blocks
+        :param outchannels: int, number of output channels
+        :param d_steps: int, number of discriminator training steps over the generator (ex: 2 means that the discriminator is trained two times for each train step of the genrator)
+        :param gp_weight: float, gradient penalty hyperparameter
+        :param drift_weight: float, hyper parameter
+        """
         super().__init__()
 
         self.start_dim=(start_dim,start_dim,outchannels)
@@ -172,6 +189,10 @@ class PGGAN(keras.Model):
 
 
     def init_generator(self):
+        """
+
+        :return: Tiny generator
+        """
         noise = Input(shape=(self.latent_dim,))
         x = PixelNormalization()(noise)
         # Actual size(After doing reshape) is just FILTERS[0], so divide gain by 4
@@ -190,6 +211,10 @@ class PGGAN(keras.Model):
         return g_model
 
     def init_discriminator(self):
+        """
+
+        :return: Tiny discriminator
+        """
         img_input = Input(shape=self.start_dim,dtype=tf.float32)
         #img_input = tf.cast(img_input, tf.float32)
         # fromRGB
@@ -212,7 +237,12 @@ class PGGAN(keras.Model):
     # Fade in upper resolution block
     def fade_in_generator(self):
 
-        """Fade in generator block to gradually weight the output of the new layer"""
+        """Fade in generator block to gradually weight the output of the new layer
+
+        In the fade in phase the new layer are trained and weighted in parallel with the old ones.
+        Once this layers are trained, is possible to stabilize the network removing the skip connection
+
+        """
 
         # for layer in self.generator.layers:
         #    layer.trainable = False
@@ -248,6 +278,9 @@ class PGGAN(keras.Model):
 
     # Fade in upper resolution block
     def fade_in_discriminator(self):
+        """
+        Same idea of the fade_in_generator
+        """
         #for layer in self.discriminator.layers:
         #    layer.trainable = False
         input_shape = list(self.discriminator.input.shape)

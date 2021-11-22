@@ -97,11 +97,12 @@ class VAE(keras.Model):
         self.latent_dim=latent_dim
 
         self.encoder = self.build_encoder(input_dim,latent_dim)
-        self.decoder = self.build_decoder(latent_dim,output_channel=1)
+        self.decoder = self.build_decoder(latent_dim,output_channel=output_channel)
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
         self.reconstruction_loss_tracker = keras.metrics.Mean(
             name="reconstruction_loss"
         )
+        self.output_channels=output_channel
         self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
 
     @property

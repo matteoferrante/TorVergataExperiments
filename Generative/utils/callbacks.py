@@ -185,7 +185,45 @@ class WandbImagesCVAE(keras.callbacks.Callback):
         log = {f"image_sampled": wandb.Image(vis)}
         wandb.log(log)
 
+class WandbImagesVAEGAN(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb for VAE
+    """
 
+    def __init__(self, validation_data):
+
+        """Workaround to keep validation data!"""
+
+        super().__init__()
+        self.validation_data = validation_data
+
+    def on_epoch_end(self, epoch, logs=None):
+
+
+        if self.validation_data:
+            x_recon=self.model.vae(next(iter(self.validation_data)))
+
+            x_recon=x_recon[:100] ## use more than 100 in bS
+            images = x_recon.numpy() * 255.
+            images = np.repeat(images, 3, axis=-1)
+            vis = build_montages(images, (28, 28), (10, 10))[0]
+
+            log={f"image":wandb.Image(vis)}
+            wandb.log(log)
+        else:
+            print(f"No validation data {self.validation_data}")
+
+        ## just sampling
+
+        z=np.random.randn(100,self.model.latent_dim)
+        x_sampled=self.model.vae.decode(z)
+
+        images = x_sampled.numpy() *255.
+        images = np.repeat(images, 3, axis=-1)
+        vis = build_montages(images, (28, 28), (10, 10))[0]
+
+        log = {f"image_sampled": wandb.Image(vis)}
+        wandb.log(log)
 
 
 class SaveGeneratorWeights(keras.callbacks.Callback):
@@ -204,6 +242,21 @@ class SaveGeneratorWeights(keras.callbacks.Callback):
         except:
             self.model.encoder.save_weights(self.filepath)
 
+
+class SaveVAEGANWeights(keras.callbacks.Callback):
+
+    def __init__(self, filepath):
+        super().__init__()
+        self.filepath=filepath
+
+    """A custom callback to save VAEGAN weights"""
+
+
+    def on_epoch_end(self, epoch,logs=None):
+
+        self.model.vae.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
+        self.model.vae.encoder.save_weights(opj(self.filepath,"encoder_weights.h5"))
+        self.model.discriminator.save_weights(opj(self.filepath,"discriminator_weights.h5"))
 
 
 class Save_VQVAE_Weights(keras.callbacks.Callback):
