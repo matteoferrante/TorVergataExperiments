@@ -1,7 +1,8 @@
+import os
 import sys
 
 from classes.VAE import VAE
-from utils.callbacks import WandbImagesVAE, SaveGeneratorWeights
+from utils.callbacks import WandbImagesVAE, SaveGeneratorWeights, SaveVAEWeights
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -25,8 +26,13 @@ wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 
 ###
+
+
+encoder_architecture=[(1,64),(1,128),(1,256),(1,512)]
+decoder_architecture=[(1,64),(1,128),(1,256),(1,512)]
+
 BS=256
-g=VAE((28,28,1),100)
+g=VAE((28,28,1),latent_dim=100)
 
 print(g.encoder.summary())
 
@@ -50,8 +56,10 @@ test_dataset=test_dataset.shuffle(1024).batch(BS).repeat()
 
 ##CHECKPOINT
 
-model_check=SaveGeneratorWeights(filepath="models/generator_vae_mnist.h5")
+#model_check=SaveGeneratorWeights(filepath="models/generator_vae_mnist.h5")
 
+os.makedirs("models/vae",exist_ok=True)
+model_check=SaveVAEWeights(filepath="models/vae")
 
 
 callbacks=[

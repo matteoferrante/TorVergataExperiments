@@ -1,10 +1,11 @@
+import json
 
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import *
 
 from tensorflow.keras.models import Model
-
+from Architectures import Encoder,Decoder
 
 
 
@@ -76,7 +77,7 @@ class VAE(keras.Model):
 
 
 
-    def __init__(self, input_dim, latent_dim,output_channel=1, **kwargs):
+    def __init__(self, input_dim, latent_dim,output_channels=1, encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]],**kwargs):
         """
 
         :param input_dim: dimension of images
@@ -95,14 +96,20 @@ class VAE(keras.Model):
 
         self.input_dim=input_dim
         self.latent_dim=latent_dim
+        self.encoder_architecture=encoder_architecture
+        self.decoder_architecture=decoder_architecture
 
-        self.encoder = self.build_encoder(input_dim,latent_dim)
-        self.decoder = self.build_decoder(latent_dim,output_channel=output_channel)
+        #self.encoder = self.build_encoder(input_dim,latent_dim)
+        #self.decoder = self.build_decoder(latent_dim,output_channel=output_channel)
+
+        self.encoder=Encoder(self.input_shape,latent_dim=latent_dim,version="vae",conv_layer_list=encoder_architecture)
+        self.decoder=Decoder(self.input_shape,latent_dim=latent_dim,version="vae",conv_layer_list=decoder_architecture)
+
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
         self.reconstruction_loss_tracker = keras.metrics.Mean(
             name="reconstruction_loss"
         )
-        self.output_channels=output_channel
+        self.output_channels=output_channels
         self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
 
     @property
@@ -254,3 +261,9 @@ class VAE(keras.Model):
 
         return decoder
 
+    def save_dict(self,path):
+        dictionary_data={"input_dim":self.input_dim,"latent_dim":self.latent_dim,"output_channels":self.output_channels,
+                         "encoder_architecture":self.encoder_architecture, "decoder_architecture":self.decoder_architecture}
+        a_file = open(path, "w")
+        json.dump(dictionary_data, a_file)
+        a_file.close()

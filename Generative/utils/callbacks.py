@@ -77,6 +77,9 @@ class WandbImagesPGGAN(keras.callbacks.Callback):
         wandb.log(log)
 
 class WandbImagesCPGGAN(keras.callbacks.Callback):
+
+    #TODO fix random conditions with fixed conditions!
+
     """
     A custom Callback to produce a grid of images in wandb
     """
@@ -84,6 +87,8 @@ class WandbImagesCPGGAN(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
 
         random_latent_vectors = tf.random.normal(shape=(100, self.model.latent_dim))
+        #conditions = np.repeat(np.arange(0, self.model.num_classes, 1).tolist(), 10)
+
         random_conditions = tf.random.uniform(shape=[100, ], minval=0, maxval=self.model.num_classes, dtype=tf.int32)
 
         generated_images = self.model.generator([random_latent_vectors,random_conditions])
@@ -241,6 +246,36 @@ class SaveGeneratorWeights(keras.callbacks.Callback):
             self.model.generator.save_weights(self.filepath)
         except:
             self.model.encoder.save_weights(self.filepath)
+
+
+class SaveVAEWeights(keras.callbacks.Callback):
+
+    def __init__(self,filepath):
+        super().__init__()
+
+    def on_train_begin(self, logs=None):
+        """
+        Create the directory and save some info about the architecture
+
+        """
+        os.makedirs(self.filepath,exist_ok=True)
+        tf.keras.utils.plot_model(
+            self.model,
+            to_file=opj(self.filepath,"vae_model.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=False,
+            dpi=96,
+            layer_range=None,
+        )
+
+
+    def on_epoch_end(self, epoch,logs=None):
+
+        self.model.generator.save_weights(opj(self.filepath,"encoder_weights.h5"))
+        self.model.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
 
 
 class SaveVAEGANWeights(keras.callbacks.Callback):
