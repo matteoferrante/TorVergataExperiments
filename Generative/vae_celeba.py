@@ -2,7 +2,7 @@ import os
 import sys
 
 from classes.VAE import VAE
-from utils.callbacks import WandbImagesVAE, SaveGeneratorWeights, SaveVAEWeights
+from utils.callbacks import WandbImagesVAE, SaveGeneratorWeights, SaveVAEWeights, WandbVAECallback
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -118,7 +118,7 @@ g.compile(optimizer=keras.optimizers.Adam(learning_rate=INIT_LR))
 
 callbacks=[
     WandbImagesVAE(val_dataset,target_shape=(128,128,3)),
-    WandbCallback(),
+    WandbVAECallback(),
     model_check,
 ]
 

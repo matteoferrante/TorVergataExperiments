@@ -481,4 +481,19 @@ class WandbImagesVQVAE2(keras.callbacks.Callback):
 
 
 
+class WandbVAECallback(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb for VAE
+    """
+
+
+    def on_epoch_end(self, epoch, logs=None):
+
+        log={"loss": self.model.total_loss_tracker.result(),
+        "reconstruction_loss": self.model.reconstruction_loss_tracker.result(),
+        "kl_loss": self.model.kl_loss_tracker.result()}
+        wandb.log(log)
+
+
+
 
