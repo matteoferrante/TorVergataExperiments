@@ -87,7 +87,7 @@ if args.phase==0:
 
 
 
-    model_check= Save_VQVAE_Weights(output_dir="models",outname="vq_vae",endname="mnist")
+    model_check= Save_VQVAE_Weights(output_dir="../models", outname="vq_vae", endname="mnist")
 
 
 

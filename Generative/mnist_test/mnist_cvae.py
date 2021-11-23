@@ -49,7 +49,7 @@ test_dataset=test_dataset.shuffle(1024).batch(BS).repeat()
 
 ##CHECKPOINT
 
-model_check=SaveGeneratorWeights(filepath="models/generator_cvae_mnist.h5")
+model_check=SaveGeneratorWeights(filepath="../models/generator_cvae_mnist.h5")
 
 
 

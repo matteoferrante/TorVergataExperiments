@@ -1,7 +1,5 @@
-import os
-
-from classes.VAEGAN import VAEGAN
-from utils.callbacks import WandbImagesGAN, SaveGeneratorWeights, SaveVAEGANWeights, WandbImagesVAEGAN
+from classes.GAN import GAN
+from utils.callbacks import WandbImagesGAN, SaveGeneratorWeights
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -11,7 +9,7 @@ from wandb.keras import WandbCallback
 
 wandb.login()
 
-config={"dataset":"mnist","type":"VAE-GAN"}
+config={"dataset":"mnist","type":"GAN"}
 
 wandb.init(project="TorVergataExperiment-Generative",config=config)
 
@@ -24,7 +22,7 @@ wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 ###
 BS=256
-g=VAEGAN((28,28,1),100)
+g=GAN(BS)
 
 
 ts=len(x_train)//BS
@@ -38,19 +36,17 @@ train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
 train_dataset=  train_dataset.shuffle(buffer_size=1024).batch(BS).repeat()
 
 
-test_dataset=tf.data.Dataset.from_tensor_slices(x_test)
+test_dataset=tf.data.Dataset.from_tensor_slices((x_test,y_test))
 test_dataset=test_dataset.shuffle(1024).batch(BS)
 
 ##CHECKPOINT
-os.makedirs("models/vaegan",exist_ok=True)
-model_check=SaveVAEGANWeights(filepath="models/vaegan")
 
-
+model_check=SaveGeneratorWeights(filepath="../models/generator_gan_mnist.h5")
 
 
 
 callbacks=[
-    WandbImagesVAEGAN(test_dataset),
+    WandbImagesGAN(),
     WandbCallback(),
     model_check
 ]

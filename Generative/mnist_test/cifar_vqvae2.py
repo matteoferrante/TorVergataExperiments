@@ -95,7 +95,7 @@ if args.phase==0:
 
 
 
-    model_check= Save_VQVAE2_Weights(output_dir="models",outname="vq_vae2",endname="cifar10")
+    model_check= Save_VQVAE2_Weights(output_dir="../models", outname="vq_vae2", endname="cifar10")
 
 
 

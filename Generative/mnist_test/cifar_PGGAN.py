@@ -1,12 +1,11 @@
 import os
-import sys
 
 import tensorflow as tf
 import numpy as np
 import glob
 import argparse
-from classes.ConditionalPGGAN import CPGGAN
-from utils.callbacks import WandbImagesPGGAN, WandbImagesCPGGAN
+from classes.PGGAN import PGGAN
+from utils.callbacks import WandbImagesPGGAN
 import wandb
 import tensorflow.keras as keras
 from os.path import join as opj
@@ -15,15 +14,13 @@ from wandb.keras import WandbCallback
 
 wandb.login()
 
-checkpoint_path="models/CPGGAN"
-
-
-config={"dataset":"cifar", "type":"CPG-GAN"}
+checkpoint_path= "../models/PGGAN"
+config={"dataset":"cifar", "type":"PG-GAN"}
 
 wandb.init(project="TorVergataExperiment-Generative",config=config)
 
 
-BS_list = [256,64,64,32]
+BS_list = [256,128,64,32]
 
 BS=BS_list[0]
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
@@ -43,10 +40,10 @@ EPOCHS_PER_RES = 16
 
 ## INIT
 
-def resize(x,y,target_size=(4,4)):
-    return tf.image.resize(x,target_size),y
+def resize(img,target_size=(4,4)):
+    return tf.image.resize(img,target_size)
 
-train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
+train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(resize)
 
 # Instantiate the optimizer for both networks
@@ -54,12 +51,12 @@ train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(r
 generator_optimizer = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.0, beta_2=0.99, epsilon=1e-8)
 discriminator_optimizer = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.0, beta_2=0.99, epsilon=1e-8)
 
-pgan = CPGGAN(
+pgan = PGGAN(
     latent_dim = NOISE_DIM,
     d_steps = 1,
 )
 
-callbacks=[WandbImagesCPGGAN(),WandbCallback()]
+callbacks=[WandbImagesPGGAN(),WandbCallback()]
 
 pgan.compile(
     d_optimizer=discriminator_optimizer,
@@ -68,14 +65,11 @@ pgan.compile(
 
 os.makedirs(checkpoint_path,exist_ok=True)
 # Start training the initial generator and discriminator
-
-tf.keras.utils.plot_model(pgan.generator, to_file=opj(checkpoint_path,f'generator_{pgan.n_depth}.png'), show_shapes=True)
-tf.keras.utils.plot_model(pgan.discriminator, to_file=opj(checkpoint_path,f'discriminator_{pgan.n_depth}.png'), show_shapes=True)
-
-
 pgan.fit(train_dataset, steps_per_epoch = ts, epochs = EPOCHS_PER_RES, callbacks=callbacks)
 pgan.save_weights(opj(checkpoint_path, f"checkpoint_path_ndepth_0_weights_cifar.h5"))
 
+tf.keras.utils.plot_model(pgan.generator, to_file=opj(checkpoint_path,f'generator_{pgan.n_depth}.png'), show_shapes=True)
+tf.keras.utils.plot_model(pgan.discriminator, to_file=opj(checkpoint_path,f'discriminator_{pgan.n_depth}.png'), show_shapes=True)
 
 
 # Train faded-in / stabilized generators and discriminators
@@ -93,9 +87,9 @@ for n_depth in range(1, 4):
   ##dataset redefinition
   BS=BS_list[n_depth]
   ts = len(x_train) // BS
-  train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
+  train_dataset = tf.data.Dataset.from_tensor_slices(x_train)
 
-  train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(lambda  x,y: resize(x,y,new_dim))
+  train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BS).repeat().map(lambda  x: resize(x,new_dim))
 
   #enlarge network
 
