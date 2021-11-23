@@ -266,3 +266,10 @@ class VAE(keras.Model):
         a_file = open(path, "w")
         json.dump(dictionary_data, a_file)
         a_file.close()
+
+    def get_dict(self):
+        dictionary_data = {"input_dim": self.input_dim, "latent_dim": self.latent_dim,
+                           "output_channels": self.output_channels,
+                           "encoder_architecture": self.encoder_architecture,
+                           "decoder_architecture": self.decoder_architecture}
+        return dictionary_data
