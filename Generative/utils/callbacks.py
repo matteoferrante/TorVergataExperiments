@@ -269,7 +269,6 @@ class SaveVAEWeights(keras.callbacks.Callback):
             rankdir="TB",
             expand_nested=False,
             dpi=96,
-            layer_range=None,
         )
 
 
