@@ -279,7 +279,7 @@ class SaveVAEWeights(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch,logs=None):
 
-        self.model.generator.save_weights(opj(self.filepath,"encoder_weights.h5"))
+        self.model.encoder.save_weights(opj(self.filepath,"encoder_weights.h5"))
         self.model.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
 
 
