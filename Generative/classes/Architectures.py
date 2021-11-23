@@ -419,7 +419,8 @@ def Decoder(target_shape,latent_dim,conv_layer_list,encoder_output_shape=None,ve
         else:
             x = ConvTransposeResBlock(n_filters, n_res_block, n_filters)(x)
 
-    decoder = Model(latent_inputs, x, name="decoder")
+    decoder_outputs = Conv2DTranspose(target_shape[-1], 3, activation="sigmoid", padding="same")(x)
+    decoder = Model(latent_inputs, decoder_outputs, name="decoder")
     return decoder
 
 
@@ -483,5 +484,7 @@ def ConditionalDecoder(target_shape,latent_dim,conditional_shape,embedding_dim, 
 
         x = ConvTransposeResBlock(n_filters, n_res_block, n_filters)(x)
 
-    decoder = Model([latent_inputs,in_label], x, name="conditional_decoder")
+    decoder_outputs = Conv2DTranspose(target_shape[-1], 3, activation="sigmoid", padding="same")(x)
+
+    decoder = Model([latent_inputs,in_label], decoder_outputs, name="conditional_decoder")
     return decoder
