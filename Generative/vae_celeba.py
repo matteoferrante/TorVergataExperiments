@@ -123,5 +123,4 @@ callbacks=[
 ]
 
 
-g.compile(optimizer=keras.optimizers.Adam(learning_rate=INIT_LR))
 g.fit(train_dataset,validation_data=test_dataset,steps_per_epoch=ts,validation_steps=vs,epochs=EPOCHS,callbacks=callbacks)
