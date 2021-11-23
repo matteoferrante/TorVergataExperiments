@@ -251,6 +251,7 @@ class SaveGeneratorWeights(keras.callbacks.Callback):
 class SaveVAEWeights(keras.callbacks.Callback):
 
     def __init__(self,filepath):
+        self.filepath=filepath
         super().__init__()
 
     def on_train_begin(self, logs=None):
