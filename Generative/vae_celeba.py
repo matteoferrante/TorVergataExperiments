@@ -9,7 +9,6 @@ import numpy as np
 import wandb
 from wandb.keras import WandbCallback
 from imutils import paths
-from tensorflow.data import AUTOTUNE
 import matplotlib.pyplot as plt
 
 
@@ -76,11 +75,11 @@ print(f"[TRAINING]\t {len(train_imgs)}\n[VALIDATION]\t {len(val_imgs)}\n[TEST]\t
 train_dataset = tf.data.Dataset.from_tensor_slices(train_imgs)
 train_dataset = (train_dataset
     .shuffle(1024)
-    .map(load_images, num_parallel_calls=AUTOTUNE)
+    .map(load_images)
     .cache()
     .repeat()
     .batch(BS)
-    .prefetch(AUTOTUNE)
+    .prefetch()
 )
 
 ts=len(train_imgs)//BS
@@ -90,11 +89,11 @@ ts=len(train_imgs)//BS
 val_dataset = tf.data.Dataset.from_tensor_slices(val_imgs)
 val_dataset = (val_dataset
     .shuffle(1024)
-    .map(load_images, num_parallel_calls=AUTOTUNE)
+    .map(load_images)
     .cache()
     .repeat()
     .batch(BS)
-    .prefetch(AUTOTUNE)
+    .prefetch()
 )
 
 vs=len(val_imgs)//BS
