@@ -5,7 +5,7 @@ from tensorflow import keras
 from tensorflow.keras.layers import *
 
 from tensorflow.keras.models import Model
-from .Architectures import Encoder,Decoder
+from .Architectures import Encoder, Decoder, Sampling
 
 
 #
