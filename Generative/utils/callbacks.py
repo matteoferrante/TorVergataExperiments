@@ -112,12 +112,13 @@ class WandbImagesVAE(keras.callbacks.Callback):
     A custom Callback to produce a grid of images in wandb for VAE
     """
 
-    def __init__(self, validation_data):
+    def __init__(self, validation_data,target_shape):
 
         """Workaround to keep validation data!"""
 
         super().__init__()
         self.validation_data = validation_data
+        self.target_shape=target_shape
 
     def on_epoch_end(self, epoch, logs=None):
 
@@ -127,8 +128,10 @@ class WandbImagesVAE(keras.callbacks.Callback):
 
             x_recon=x_recon[:100] ## use more than 100 in bS
             images = x_recon.numpy() * 255.
-            images = np.repeat(images, 3, axis=-1)
-            vis = build_montages(images, (28, 28), (10, 10))[0]
+            if self.target_shape[-1]==1:
+
+                images = np.repeat(images, 3, axis=-1)
+            vis = build_montages(images, (self.target_shape[0], self.target_shape[1]), (10, 10))[0]
 
             log={f"image":wandb.Image(vis)}
             wandb.log(log)
@@ -141,8 +144,10 @@ class WandbImagesVAE(keras.callbacks.Callback):
         x_sampled=self.model.decode(z)
 
         images = x_sampled.numpy() *255.
-        images = np.repeat(images, 3, axis=-1)
-        vis = build_montages(images, (28, 28), (10, 10))[0]
+
+        if self.target_shape[-1] == 1:
+            images = np.repeat(images, 3, axis=-1)
+        vis = build_montages(images, (self.target_shape[0], self.target_shape[1]), (10, 10))[0]
 
         log = {f"image_sampled": wandb.Image(vis)}
         wandb.log(log)
