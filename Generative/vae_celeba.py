@@ -79,7 +79,6 @@ train_dataset = (train_dataset
     .cache()
     .repeat()
     .batch(BS)
-    .prefetch()
 )
 
 ts=len(train_imgs)//BS
@@ -93,7 +92,6 @@ val_dataset = (val_dataset
     .cache()
     .repeat()
     .batch(BS)
-    .prefetch()
 )
 
 vs=len(val_imgs)//BS
@@ -103,10 +101,9 @@ vs=len(val_imgs)//BS
 test_dataset = tf.data.Dataset.from_tensor_slices(test_imgs)
 test_dataset = (test_dataset
     .shuffle(1024)
-    .map(load_images, num_parallel_calls=AUTOTUNE)
+    .map(load_images)
     .cache()
     .batch(BS)
-    .prefetch(AUTOTUNE)
 )
 
 os.makedirs("models/vae",exist_ok=True)
