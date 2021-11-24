@@ -11,7 +11,7 @@ class GAN(keras.Model):
     base class for adversarial network learning that extends keras.Model
 
     """
-    def __init__(self, latent_dim,target_shape,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]]):
+    def __init__(self,target_shape,latent_dim,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]]):
         """
 
         Attributes
@@ -181,3 +181,10 @@ class GAN(keras.Model):
             name="generator",
         )
         return generator
+
+
+    def get_dict(self):
+        dictionary_data = {"input_dim": self.input_dim, "latent_dim": self.latent_dim,
+                           "encoder_architecture": self.encoder_architecture,
+                           "decoder_architecture": self.decoder_architecture}
+        return dictionary_data
