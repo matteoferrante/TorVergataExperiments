@@ -109,7 +109,7 @@ test_dataset = (test_dataset
 os.makedirs("models/gan",exist_ok=True)
 model_check=SaveGANWeights(filepath="models/gan")
 
-g.compile(optimizer=keras.optimizers.Adam(learning_rate=INIT_LR))
+g.compile()
 
 
 callbacks=[
