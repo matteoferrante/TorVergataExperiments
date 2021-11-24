@@ -184,7 +184,7 @@ class GAN(keras.Model):
 
 
     def get_dict(self):
-        dictionary_data = {"input_dim": self.input_dim, "latent_dim": self.latent_dim,
+        dictionary_data = {"target_shape": self.target_shape, "latent_dim": self.latent_dim,
                            "encoder_architecture": self.encoder_architecture,
                            "decoder_architecture": self.decoder_architecture}
         return dictionary_data
