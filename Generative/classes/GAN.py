@@ -1,7 +1,7 @@
 import sys
 
-import keras
-from keras import layers
+import tensorflow.keras as keras
+from tensorflow.keras import layers
 import tensorflow as tf
 from .Architectures import Decoder,Discriminator
 
