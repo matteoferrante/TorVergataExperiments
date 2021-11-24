@@ -3,7 +3,7 @@ import sys
 import keras
 from keras import layers
 import tensorflow as tf
-
+from .Architectures import Decoder,Discriminator
 
 
 class GAN(keras.Model):
@@ -11,16 +11,20 @@ class GAN(keras.Model):
     base class for adversarial network learning that extends keras.Model
 
     """
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim,target_shape,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]]):
         """
-
-        :param latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
 
         Attributes
         ----------
-        discriminator: model
-        generator : model
-        latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
+
+        :param latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
+        :param target_shape: tuple, shape of the image
+        :param discriminator: model
+        :param generator : model
+        :param latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
+        :param encoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
+        :param decoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
+
 
         Methods
         ---------
@@ -29,9 +33,19 @@ class GAN(keras.Model):
 
         """
         super().__init__()
-        self.discriminator = self.build_discriminator()
-        self.generator = self.build_generator(latent_dim)
+
+        self.target_shape = target_shape
         self.latent_dim = latent_dim
+        self.encoder_architecture=encoder_architecture
+        self.decoder_architecture=decoder_architecture
+
+
+
+        #self.discriminator = self.build_discriminator()
+        #self.generator = self.build_generator(latent_dim)
+
+        self.discriminator=Discriminator(target_shape,100,conv_layer_list=encoder_architecture)
+        self.generator=Decoder(target_shape,latent_dim,decoder_architecture)
 
     def compile(self, d_optimizer=tf.keras.optimizers.Adam(3e-4), g_optimizer=tf.keras.optimizers.Adam(3e-4), loss_fn=tf.keras.losses.BinaryCrossentropy(from_logits=True),d_accuracy=tf.keras.metrics.Accuracy()):
         """

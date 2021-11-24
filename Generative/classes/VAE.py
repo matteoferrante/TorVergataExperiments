@@ -86,6 +86,8 @@ class VAE(keras.Model):
         ----------
         total_loss_tracker: mean of the sum of reconstruction_loss and kl_loss
         reconstruction_loss: mean metrics that are L2 norm between input and outputs
+        encoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
+        decoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
         kl_loss: regularizer loss
 
 
