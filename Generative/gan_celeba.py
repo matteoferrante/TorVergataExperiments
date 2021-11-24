@@ -112,9 +112,19 @@ model_check=SaveGANWeights(filepath="models/gan")
 g.compile()
 
 
+#TODO fix Wandbcallback with specific function
+
+try:
+
+    wb=WandbCallback()
+except:
+    print(f"[WARNING] Something went wrong with wandb callback. Retry..")
+
+    wb=WandbCallback()
+
 callbacks=[
     WandbImagesGAN(target_shape=(128,128,3)),
-    WandbCallback(),
+    wb,
     model_check,
 ]
 
