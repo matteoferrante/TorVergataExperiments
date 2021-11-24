@@ -2,7 +2,8 @@ import os
 import sys
 
 from classes.GAN import GAN
-from utils.callbacks import WandbImagesVAE, SaveGeneratorWeights, SaveVAEWeights, WandbVAECallback, WandbImagesGAN
+from utils.callbacks import WandbImagesVAE, SaveGeneratorWeights, SaveVAEWeights, WandbVAECallback, WandbImagesGAN, \
+    SaveGANWeights
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
