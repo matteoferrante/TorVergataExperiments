@@ -44,7 +44,7 @@ class GAN(keras.Model):
         #self.discriminator = self.build_discriminator()
         #self.generator = self.build_generator(latent_dim)
 
-        self.discriminator=Discriminator(target_shape,2,conv_layer_list=encoder_architecture)
+        self.discriminator=Discriminator(target_shape,1,conv_layer_list=encoder_architecture)
         self.generator=Decoder(target_shape,latent_dim,decoder_architecture)
 
     def compile(self, d_optimizer=tf.keras.optimizers.Adam(3e-4), g_optimizer=tf.keras.optimizers.Adam(3e-4), loss_fn=tf.keras.losses.BinaryCrossentropy(from_logits=True),d_accuracy=tf.keras.metrics.Accuracy()):
