@@ -27,7 +27,7 @@ class WandbImagesGAN(keras.callbacks.Callback):
         random_latent_vectors = tf.random.normal(shape=(100, self.model.latent_dim))
         generated_images = self.model.generator(random_latent_vectors)
 
-        images = generated_images*255.
+        images = generated_images.numpy() * 255
         if self.target_shape[-1]==1:
             images = np.repeat(images, 3, axis=-1)
         vis = build_montages(images, (self.target_shape[0], self.target_shape[1]), (10, 10))[0]
