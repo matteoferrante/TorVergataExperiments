@@ -67,7 +67,30 @@ class GAN(keras.Model):
         self.d_accuracy=d_accuracy
 
     def call(self, inputs, training=None, mask=None):
-        return self.gan(inputs)
+
+        batch_size=len(inputs)
+        random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
+
+        # Decode them to fake images
+        generated_images = self.generator(random_latent_vectors)
+
+        # Combine them with real images
+        combined_images = tf.concat([generated_images, inputs], axis=0)
+
+        # Assemble labels discriminating real from fake images
+        labels = tf.concat(
+            [tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0
+        )
+
+        # Add random noise to the labels - important trick!
+        labels += 0.05 * tf.random.uniform(labels.shape)
+
+        y_pred = self.discriminator(combined_images)
+
+        d_loss = self.loss_fn(labels, y_pred)
+        d_acc = self.d_accuracy(tf.round(labels), tf.round(y_pred))
+
+        return {"d_loss":d_loss,"d_acc": d_acc,"gen_imgs":generated_images}
 
 
 
