@@ -1,6 +1,7 @@
 import sys
 
 import tensorflow.keras as keras
+from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers
 import tensorflow as tf
 from .Architectures import Decoder,Discriminator
@@ -22,8 +23,8 @@ class GAN(keras.Model):
         :param discriminator: model
         :param generator : model
         :param latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
-        :param encoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
-        :param decoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
+        :param encoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..] for discriminator
+        :param decoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..] for generator
 
 
         Methods
@@ -47,6 +48,8 @@ class GAN(keras.Model):
         self.discriminator=Discriminator(target_shape,1,conv_layer_list=encoder_architecture)
         self.generator=Decoder(target_shape,latent_dim,decoder_architecture)
 
+        self.gan=Sequential([self.generator,self.discriminator])
+
     def compile(self, d_optimizer=tf.keras.optimizers.Adam(3e-4), g_optimizer=tf.keras.optimizers.Adam(3e-4), loss_fn=tf.keras.losses.BinaryCrossentropy(from_logits=True),d_accuracy=tf.keras.metrics.Accuracy()):
         """
         method to compile all modules of this model
@@ -65,6 +68,8 @@ class GAN(keras.Model):
 
     def call(self, inputs, training=None, mask=None):
         return self.gan(inputs)
+
+
 
 
     def train_step(self, data):
