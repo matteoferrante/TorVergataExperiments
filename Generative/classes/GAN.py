@@ -70,7 +70,6 @@ class GAN(keras.Model):
 
         batch_size=len(inputs)
 
-        print(F"[DEBUG] {batch_size} {inputs}")
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
 
         # Decode them to fake images
