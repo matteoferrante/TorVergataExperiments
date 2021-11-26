@@ -474,8 +474,10 @@ class WandbImagesVQVAE(keras.callbacks.Callback):
 
             x_recon=x_recon[:100] ## use more than 100 in bS
             images = x_recon.numpy() * 255.
-            images = np.repeat(images, 3, axis=-1)
-            vis = build_montages(images, (28, 28), (10, 10))[0]
+
+            if images.shape[-1]==1:
+                images = np.repeat(images, 3, axis=-1)
+            vis = build_montages(images, (images.shape[1], images.shape[2]), (10, 10))[0]
 
             log={f"image":wandb.Image(vis)}
             wandb.log(log)
