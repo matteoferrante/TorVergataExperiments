@@ -336,30 +336,38 @@ class SaveVAEGANWeights(keras.callbacks.Callback):
 
 class Save_VQVAE_Weights(keras.callbacks.Callback):
 
-    def __init__(self, output_dir,outname,endname="mnist"):
-        """
 
-        :param output_dir: name of the output directory
-        :param outname: name of subdirectory to create used to save encoder, emebeddings and decoder
-        :param endname: usually the name of the dataset, used as end part of the saved name.
-        (for example end name: mnist -> files are saved as encoder_mnist.h5, embeddings_mnist.h5 and decoder_mnist.h5)
-        """
+    def __init__(self,filepath):
+        self.filepath=filepath
         super().__init__()
-        self.outdir=opj(output_dir,outname)
-        self.endname=endname
-        os.makedirs(self.outdir,exist_ok=True)
 
+    def on_train_begin(self, logs=None):
+        """
+        Create the directory and save some info about the architecture
+
+        """
+        os.makedirs(self.filepath,exist_ok=True)
+        tf.keras.utils.plot_model(
+            self.model,
+            to_file=opj(self.filepath,"vqvae_model.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=False,
+            dpi=96,
+        )
 
     def on_epoch_end(self, epoch,logs=None):
 
-        self.model.encoder.save_weights(opj(self.outdir,f"vq_vae_encoder_{self.endname}.h5"))
+        self.model.encoder.save_weights(opj(self.filepath,f"vq_vae_encoder.h5"))
 
-        self.model.decoder.save_weights(opj(self.outdir,f"vq_vae_decoder_{self.endname}.h5"))
+        self.model.decoder.save_weights(opj(self.filepath,f"vq_vae_decoder.h5"))
 
 
     def on_train_end(self, logs=None):
         emb=self.model.vq_layer.get_weights()
-        np.save(opj(self.outdir,f"vq_vae_embeddings_{self.endname}.npy"),emb)
+        np.save(opj(self.filepath,f"vq_vae_embeddings.npy"),emb)
 
 
 

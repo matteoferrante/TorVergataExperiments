@@ -6,6 +6,7 @@ from tensorflow import keras
 from tensorflow.keras.layers import *
 from tensorflow.keras import Model
 import numpy as np
+from .Architectures import Encoder,Decoder
 
 
 class ResidualBlock(keras.layers.Layer):
@@ -66,6 +67,7 @@ class VectorQuantizer(Layer):
         self.beta = (
             beta  # This parameter is best kept between [0.25, 2] as per the paper.
         )
+
 
 
         # Initialize the embeddings which we will quantize.
@@ -161,7 +163,7 @@ class VQVAE(keras.Model):
 
      """
 
-    def __init__(self, input_dim, latent_dim=32, num_embeddings=128,train_variance=1, **kwargs):
+    def __init__(self, input_dim, latent_dim=32, num_embeddings=128,train_variance=1,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]], **kwargs):
         """
 
         :param input_dim: input image dimension
@@ -177,8 +179,18 @@ class VQVAE(keras.Model):
 
         self.num_embeddings = num_embeddings
 
-        self.encoder=self.get_encoder()
-        self.decoder=self.get_decoder()
+        self.encoder_architecture=encoder_architecture
+        self.decoder_architecture=decoder_architecture
+
+        #self.encoder=self.get_encoder()
+        #self.decoder=self.get_decoder()
+
+        self.encoder=Encoder(self.input_dim,self.latent_dim,version="vqvae",conv_layer_list=encoder_architecture)
+
+        enc_out_size=self.input_dim[0]//2**len(encoder_architecture)
+        enc_out_shape=(enc_out_size,enc_out_size,latent_dim)
+
+        self.decoder=Decoder(self.input_dim,self.latent_dim,conv_layer_list=decoder_architecture,version="vqvae",encoder_output_shape=enc_out_shape)
 
         self.vqvae = self.get_vqvae()
 
@@ -198,6 +210,9 @@ class VQVAE(keras.Model):
 
 
     def __call__(self, data):
+        return self.vqvae(data)
+
+    def call(self,data):
         return self.vqvae(data)
 
     def train_step(self, x):
@@ -234,7 +249,6 @@ class VQVAE(keras.Model):
 
     def test_step(self, data):
 
-        #TODO: sostituire compiled_loss con il calcolo esplicito!
 
         # Unpack the data
         x=data
