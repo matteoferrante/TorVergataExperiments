@@ -187,7 +187,7 @@ class PixelCNN(keras.Model):
             x=PixelConvLayer(mask_type="B",filters=128,kernel_size=1,strides=1,activation="relu",padding="valid")(x)
 
 
-        out=Conv2D(self.num_embeddings,kernel_size=1,strides=1,padding="valid")(x)
+        out=Conv2D(self.num_embeddings,kernel_size=1,strides=1,padding="valid",activation="relu")(x)
 
         #out=Conv2D(1,kernel_size=1,strides=1,padding="valid")(x) #prova modifica
 
