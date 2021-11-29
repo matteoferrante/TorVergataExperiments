@@ -354,7 +354,29 @@ class Save_VQVAE_Weights(keras.callbacks.Callback):
             show_dtype=False,
             show_layer_names=True,
             rankdir="TB",
-            expand_nested=False,
+            expand_nested=True,
+            dpi=96,
+        )
+
+        tf.keras.utils.plot_model(
+            self.model.encoder,
+            to_file=opj(self.filepath, "vqvae_encoder_model.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=True,
+            dpi=96,
+        )
+
+        tf.keras.utils.plot_model(
+            self.model.decoder,
+            to_file=opj(self.filepath, "vqvae_decoder_model.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=True,
             dpi=96,
         )
 
