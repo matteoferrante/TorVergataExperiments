@@ -252,6 +252,8 @@ class WGAN(keras.Model):
 
     RMSProp as optimizer
 
+    labels are -1 for real images and 1 for fake images!
+
 
     """
     def __init__(self,target_shape,latent_dim,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]]):
@@ -306,5 +308,11 @@ class WGAN(keras.Model):
         super(GAN, self).compile(run_eagerly=True)
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
-        self.loss_fn = loss_fn
+
+
+        self.discrimnator_loss = loss_fn
         self.d_accuracy=d_accuracy
+
+    def discriminator_loss(y_actual, y_pred):
+        custom_loss = kb.square(y_actual - y_pred)
+        return custom_loss
