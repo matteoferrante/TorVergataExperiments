@@ -557,7 +557,7 @@ def VGGNetLike(input_shape=(128,128,3),n_attributes=40):
     x=Dense(4096)(x)
     x=Activation("relu")(x)
     x=Dense(n_attributes)(x)
-    x=Activation("tanh")
+    x=Activation("tanh")(x)
     model=Model(input,x,name="VGGNetLike_Classificator")
     return model
 
@@ -617,7 +617,8 @@ def miniVGGNetLike(input_shape=(128,128,3),n_attributes=40):
     x=Dense(2048)(x)
     x=Activation("relu")(x)
     x=Dense(n_attributes)(x)
-    x=Activation("tanh")
+    x=Activation("tanh")(x)
+
     model=Model(input,x,name="VGGNetLike_Classificator")
     return model
 
