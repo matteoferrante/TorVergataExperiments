@@ -217,3 +217,94 @@ class GAN(keras.Model):
                            "encoder_architecture": self.encoder_architecture,
                            "decoder_architecture": self.decoder_architecture}
         return dictionary_data
+
+
+
+
+class WGAN(keras.Model):
+    """
+    GAN version with wesserstein loss
+
+    There are some differences with the basic GAN
+
+    Loss:
+    -----------
+
+
+    The main difference is the loss function:
+
+    The discriminator is a critic that tries to maximize the difference
+
+    L=D(x)-D(G(z))
+
+    while the generator will try to maximize the discriminator's output on synthetic images
+
+    L=-D(G(z))
+
+    Other Changes:
+    ---------------
+
+    The discriminator will be updated more frequently than generator
+
+    The last layer of the discriminator will have a linear activation function
+
+    Clipping of the weights update
+
+    RMSProp as optimizer
+
+
+    """
+    def __init__(self,target_shape,latent_dim,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]]):
+        """
+
+        Attributes
+        ----------
+
+        :param latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
+        :param target_shape: tuple, shape of the image
+        :param discriminator: model
+        :param generator : model
+        :param latent_dim: dimension of the latent space (i.e the number of random numbers required to generate an image)
+        :param encoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..] for discriminator
+        :param decoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..] for generator
+
+
+        Methods
+        ---------
+        build_discriminator : build a sequential Keras model to discriminate between real and fake images
+        build_generator: build a sequential Keras model to generate images from noise though Conv2DTranspose layers.
+
+        """
+        super().__init__()
+
+        self.target_shape = target_shape
+        self.latent_dim = latent_dim
+        self.encoder_architecture=encoder_architecture
+        self.decoder_architecture=decoder_architecture
+
+
+
+        #self.discriminator = self.build_discriminator()
+        #self.generator = self.build_generator(latent_dim)
+
+        self.discriminator=Discriminator(target_shape,1,conv_layer_list=encoder_architecture,activation="linear")
+        self.generator=Decoder(target_shape,latent_dim,decoder_architecture)
+
+        self.gan=Sequential([self.generator,self.discriminator])
+
+
+    def compile(self, d_optimizer=tf.keras.optimizers.Adam(3e-4), g_optimizer=tf.keras.optimizers.Adam(3e-4), loss_fn=tf.keras.losses.BinaryCrossentropy(from_logits=True),d_accuracy=tf.keras.metrics.Accuracy()):
+        """
+        method to compile all modules of this model
+
+        :param d_optimizer: optimizer for discriminator
+        :param g_optimizer: optimizer for generator
+        :param loss_fn:  loss function to use for discriminator and gan
+        :param d_accuracy: metric to measure discriminator performances
+        """
+
+        super(GAN, self).compile(run_eagerly=True)
+        self.d_optimizer = d_optimizer
+        self.g_optimizer = g_optimizer
+        self.loss_fn = loss_fn
+        self.d_accuracy=d_accuracy

@@ -561,3 +561,63 @@ def VGGNetLike(input_shape=(128,128,3),n_attributes=40):
     model=Model(input,x,name="VGGNetLike_Classificator")
     return model
 
+def miniVGGNetLike(input_shape=(128,128,3),n_attributes=40):
+
+    input=Input(shape=input_shape)
+
+    #block 1
+    x=Conv2D(32,3,padding="same")(input)
+    x=Activation("relu")(x)
+
+    x=Conv2D(32,3,padding="same")(x)
+    x=Activation("relu")(x)
+
+
+
+    #block 2
+    x = MaxPooling2D()(x)
+
+    x = Conv2D(64, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    x = Conv2D(64, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    #block 3
+    x = MaxPooling2D()(x)
+
+    x = Conv2D(128, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    x = Conv2D(128, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    #block 4
+
+    x = MaxPooling2D()(x)
+
+    x = Conv2D(256, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    x = Conv2D(256, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    #block 5
+
+    x = MaxPooling2D()(x)
+
+    x = Conv2D(256, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    x = Conv2D(256, 3, padding="same")(x)
+    x = Activation("relu")(x)
+
+    x=Flatten()(x)
+
+    x=Dense(2048)(x)
+    x=Activation("relu")(x)
+    x=Dense(n_attributes)(x)
+    x=Activation("tanh")
+    model=Model(input,x,name="VGGNetLike_Classificator")
+    return model
+
