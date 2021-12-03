@@ -338,15 +338,15 @@ class WGAN(keras.Model):
 
     def wesserstein_loss(y_true, y_pred):
 
-        y_true_round=tf.math.round(y_true) #restore original labels
+        #y_true_round=tf.math.round(y_true) #restore original labels
 
-        out_fake=tf.reduce_mean(y_pred[y_true_round==1.])
-        out_true=tf.reduce_mean(y_pred[y_true_round==-1.])
+        #out_fake=tf.reduce_mean(y_pred[y_true_round==1.])
+        #out_true=tf.reduce_mean(y_pred[y_true_round==-1.])
 
 
         """This should be equivalent to maximize D(x)-D(G(z))"""
-        return -(out_true-out_fake)
-
+        #return -(out_true-out_fake)
+        return tf.reduce_mean(y_true*y_pred)
 
 
 
@@ -428,7 +428,7 @@ class WGAN(keras.Model):
 
 
 
-    def train_critic(self,x,noisy_labels=True):
+    def train_critic(self,x,noisy_labels=False):
         """Train the discriminator
         :param x: images
         :param noisy_labels: bool, if True add some noise to labels to further stabilize training
@@ -474,10 +474,12 @@ class WGAN(keras.Model):
         discriminator = keras.Sequential(
             [
                 keras.Input(shape=(28, 28, 1)),
-                layers.Conv2D(128, (3, 3), strides=(2, 2), padding="same",kernel_constraint=const),
-                layers.LeakyReLU(alpha=0.2),
                 layers.Conv2D(256, (3, 3), strides=(2, 2), padding="same",kernel_constraint=const),
                 layers.LeakyReLU(alpha=0.2),
+                layers.BatchNormalization(),
+                layers.Conv2D(512, (3, 3), strides=(2, 2), padding="same",kernel_constraint=const),
+                layers.LeakyReLU(alpha=0.2),
+                layers.BatchNormalization(),
                 layers.GlobalMaxPooling2D(),
                 layers.Dense(1),
             ],
@@ -504,9 +506,9 @@ class WGAN(keras.Model):
                 layers.Reshape((7, 7, 64)),
                 layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding="same"),
                 layers.LeakyReLU(alpha=0.2),
-                layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding="same"),
+                layers.Conv2DTranspose(256, (4, 4), strides=(2, 2), padding="same"),
                 layers.LeakyReLU(alpha=0.2),
-                layers.Conv2D(1, (7, 7), padding="same", activation="sigmoid"),
+                layers.Conv2D(1, (3, 3), padding="same", activation="sigmoid"),
             ],
             name="generator",
         )
