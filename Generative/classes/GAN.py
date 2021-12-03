@@ -338,8 +338,14 @@ class WGAN(keras.Model):
 
     def wesserstein_loss(y_true, y_pred):
 
+        y_true_round=tf.math.round(y_true) #restore original labels
+
+        out_fake=tf.reduce_mean(y_pred[y_true_round==1.])
+        out_true=tf.reduce_mean(y_pred[y_true_round==-1.])
+
+
         """This should be equivalent to maximize D(x)-D(G(z))"""
-        return tf.reduce_mean(y_true*y_pred)
+        return -(out_true-out_fake)
 
 
 
@@ -431,6 +437,8 @@ class WGAN(keras.Model):
         batch_size = tf.shape(x)[0]
 
         ## step 1 train the discriminator with real and fake imgs
+
+        # step 1.1 train on real images
 
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
 
