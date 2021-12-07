@@ -382,9 +382,9 @@ class CWGAN(keras.Model):
                 g_loss_list=[]
 
                 #train discriminator
-                for x in train_data.take(self.d_steps):
+                for x,y in train_data.take(self.d_steps):
                     bs=x.shape[0]
-                    d_loss,d_acc=self.train_critic(x)
+                    d_loss,d_acc=self.train_critic(x,y)
 
 
                     d_loss_list.append(d_loss)
@@ -451,13 +451,12 @@ class CWGAN(keras.Model):
 
 
 
-    def train_critic(self,x,noisy_labels=False):
+    def train_critic(self,x,y,noisy_labels=False):
         """Train the discriminator
         :param x: images
         :param noisy_labels: bool, if True add some noise to labels to further stabilize training
         """
 
-        x,y=x #separate conditions
         batch_size = tf.shape(x)[0]
 
         ## step 1 train the discriminator with real and fake imgs

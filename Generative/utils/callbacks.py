@@ -58,7 +58,7 @@ class WandbImagesConditionalGAN(keras.callbacks.Callback):
             images = np.repeat(images, 3, axis=-1)
         vis = build_montages(images, (self.target_shape[0], self.target_shape[1]), (n_classes, 10))[0]
 
-        log={f"image":wandb.Image(vis)}
+        log={f"image_sampled":wandb.Image(vis)}
         wandb.log(log)
 
 
