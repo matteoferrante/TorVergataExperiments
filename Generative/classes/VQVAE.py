@@ -490,8 +490,8 @@ class VQVAE2(keras.Model):
     def build_decoder(self):
 
 
-        e_top_input=Input(shape=(self.input_dim[0]//8,self.input_dim[1]//8,self.latent_dim))                        #smaller codebook
-        e_bottom_input=Input(shape=(self.input_dim[0]//4,self.input_dim[1]//4,self.latent_dim))       #bottom codebook
+        e_top_input=Input(shape=(self.input_dim[0]//16,self.input_dim[1]//16,self.latent_dim))                        #smaller codebook
+        e_bottom_input=Input(shape=(self.input_dim[0]//8,self.input_dim[1]//8,self.latent_dim))       #bottom codebook
 
         ## enlarge top inputs
 
@@ -513,6 +513,18 @@ class VQVAE2(keras.Model):
         x = Conv2DTranspose(self.channels, 3, padding="same")(x)
         x = BatchNormalization(axis=-1)(x)
         x = LeakyReLU()(x)
+
+        #block 2
+
+        x = Conv2DTranspose(self.channels, 3, strides=2, padding="same")(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = LeakyReLU()(x)
+
+        x = Conv2DTranspose(self.channels, 3, padding="same")(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = LeakyReLU()(x)
+
+        #block 3
 
         #block 2
 
