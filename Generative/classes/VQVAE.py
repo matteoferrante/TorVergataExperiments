@@ -330,6 +330,12 @@ class VQVAE(keras.Model):
 
 class VQVAE2(keras.Model):
     """Implementation of the hiearchical model based on https://proceedings.neurips.cc/paper/2019/file/5f8e2fa1718d1bbcadf1cd9c7a54fb8c-Paper.pdf paper
+
+
+    IMPORTANT:
+    I'm not sure but is necessary to set the same number for n_res_channels and latent_dim.
+    TODO: force at least in the last layer the cannel to be the same number
+
     """
 
     def __init__(self, input_dim, latent_dim=32, num_embeddings=128,train_variance=1,channels=64,n_res_block=2,n_res_channel=32, outchannels=3):
@@ -342,6 +348,10 @@ class VQVAE2(keras.Model):
         """
 
         super(VQVAE2, self).__init__()
+
+        if n_res_channel!=latent_dim:
+            print(f"[WARNING] In this implementation you should set n_res_channels as the same to latent_dim. It will be fixed in the future")
+
         self.input_dim=input_dim
         self.latent_dim = latent_dim
         self.train_variance = train_variance
@@ -369,6 +379,7 @@ class VQVAE2(keras.Model):
 
 
         self.decoder=self.build_decoder()
+
 
         ## vq vae
 
@@ -418,7 +429,16 @@ class VQVAE2(keras.Model):
             input=Input(shape=input_dim)
             x=Conv2D(channels,kernel_size=4,strides=2,padding="same")(input)
             x=Activation("relu")(x)
-            x=Conv2D(n_res_channel, kernel_size=4, strides=2, padding="same")(x)
+
+            x = Conv2D(channels, kernel_size=4, strides=2, padding="same")(x)
+            x = Activation("relu")(x)
+
+            x = Conv2D(channels, kernel_size=4, strides=2, padding="same")(x)
+            x = Activation("relu")(x)
+
+
+            x=Conv2D(n_res_channel, kernel_size=4, strides=1, padding="same")(x)
+
 
             for _ in range(n_res_block):
                 x=ResidualBlock(n_res_channel)(x)
@@ -428,11 +448,13 @@ class VQVAE2(keras.Model):
 
         if level=="top":
             "divide the input dim by four and substitute the number of channels because of bottom learner"
-            input_shape=(input_dim[0]//4,input_dim[1]//4,n_res_channel)
+            input_shape=(input_dim[0]//8,input_dim[1]//8,n_res_channel)
             input=Input(shape=input_shape)
 
             x=Conv2D(channels,kernel_size=4,strides=2,padding="same")(input)
             x=Activation("relu")(x)
+
+
             x = Conv2D(n_res_channel, kernel_size=4, padding="same")(x)
 
             for _ in range(n_res_block):
@@ -453,8 +475,8 @@ class VQVAE2(keras.Model):
         "divide the input dim by four and substitute the number of channels because of bottom learner"
 
 
-        input= Input(shape=(self.input_dim[0] // 4, self.input_dim[1] // 4, self.latent_dim))
-        cond_input  = Input(shape=(self.input_dim[0] // 8, self.input_dim[1] // 8, self.latent_dim))
+        input= Input(shape=(self.input_dim[0] // 8, self.input_dim[1] // 8, self.latent_dim))
+        cond_input  = Input(shape=(self.input_dim[0] // 16, self.input_dim[1] // 16, self.n_res_channel))
 
         x=Conv2DTranspose(self.channels,strides=(2,2),kernel_size=3,padding="same")(cond_input)
         merge = Concatenate()([input, x])
@@ -475,18 +497,34 @@ class VQVAE2(keras.Model):
 
         x_top=Conv2DTranspose(self.channels, 3, strides=2, padding="same")(e_top_input)
 
+
+
         #merge
 
         merge=Concatenate()([x_top,e_bottom_input])
 
 
+        #block 1
+
         x = Conv2DTranspose(self.channels, 3, strides=2, padding="same")(merge)
         x = BatchNormalization(axis=-1)(x)
         x = LeakyReLU()(x)
 
-        x = Conv2DTranspose(self.channels//2, 3, strides=2, padding="same")(x)
+        x = Conv2DTranspose(self.channels, 3, padding="same")(x)
         x = BatchNormalization(axis=-1)(x)
         x = LeakyReLU()(x)
+
+        #block 2
+
+        x = Conv2DTranspose(self.channels, 3, strides=2, padding="same")(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = LeakyReLU()(x)
+
+        x = Conv2DTranspose(self.channels, 3, padding="same")(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = LeakyReLU()(x)
+
+        #outblock
 
         decoder_outputs = Conv2DTranspose(self.outchannels, 3, activation="sigmoid", padding="same")(x)
         decoder = Model([e_top_input,e_bottom_input], decoder_outputs, name="decoder")

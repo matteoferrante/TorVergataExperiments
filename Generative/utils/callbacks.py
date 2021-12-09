@@ -435,28 +435,19 @@ class Save_PixelCNN_Weights(keras.callbacks.Callback):
 class Save_VQVAE2_Weights(keras.callbacks.Callback):
     """Class to save vqvae2 weights"""
 
-    def __init__(self, output_dir,outname,endname="mnist"):
-        """
-
-        :param output_dir: name of the output directory
-        :param outname: name of subdirectory to create used to save encoder, emebeddings and decoder
-        :param endname: usually the name of the dataset, used as end part of the saved name.
-        (for example end name: mnist -> files are saved as encoder_mnist.h5, embeddings_mnist.h5 and decoder_mnist.h5)
-        """
+    def __init__(self,filepath):
+        self.filepath=filepath
         super().__init__()
-        self.outdir=opj(output_dir,outname)
-        self.endname=endname
-        os.makedirs(self.outdir,exist_ok=True)
 
 
     def on_epoch_end(self, epoch,logs=None):
 
-        self.model.encoder_b.save_weights(opj(self.outdir,f"vq_vae2_encoder_b_{self.endname}.h5"))
-        self.model.encoder_t.save_weights(opj(self.outdir, f"vq_vae2_encoder_t_{self.endname}.h5"))
+        self.model.encoder_b.save_weights(opj(self.filepath,f"vq_vae2_encoder_b.h5"))
+        self.model.encoder_t.save_weights(opj(self.filepath, f"vq_vae2_encoder_t.h5"))
 
-        self.model.conditional_bottom.save_weights(opj(self.outdir, f"vq_vae2_encoder_conditional_bottom_{self.endname}.h5"))
+        self.model.conditional_bottom.save_weights(opj(self.filepath, f"vq_vae2_encoder_conditional_bottom.h5"))
 
-        self.model.decoder.save_weights(opj(self.outdir,f"vq_vae2_decoder_{self.endname}.h5"))
+        self.model.decoder.save_weights(opj(self.filepath,f"vq_vae2_decoder.h5"))
 
 
     def on_train_end(self, logs=None):
@@ -466,6 +457,71 @@ class Save_VQVAE2_Weights(keras.callbacks.Callback):
 
         np.save(opj(self.outdir,f"vq_vae_embeddings_bottom_{self.endname}.npy"),emb_b)
         np.save(opj(self.outdir,f"vq_vae_embeddings_top_{self.endname}.npy"),emb_t)
+
+    def on_train_begin(self, logs=None):
+        """
+        Create the directory and save some info about the architecture
+
+        """
+        os.makedirs(self.filepath,exist_ok=True)
+
+        tf.keras.utils.plot_model(
+            self.model.encoder_b,
+            to_file=opj(self.filepath,"vqvae2_encoder_bottom.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=False,
+            dpi=96,
+        )
+
+        tf.keras.utils.plot_model(
+            self.model.encoder_t,
+            to_file=opj(self.filepath,"vqvae2_encoder_top.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=False,
+            dpi=96,
+        )
+
+        tf.keras.utils.plot_model(
+            self.model.decoder,
+            to_file=opj(self.filepath,"vqvae2_decoder.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=False,
+            dpi=96,
+        )
+
+        tf.keras.utils.plot_model(
+            self.model.conditional_bottom,
+            to_file=opj(self.filepath,"vqvae2_conditional_bottom.png"),
+            show_shapes=True,
+            show_dtype=False,
+            show_layer_names=True,
+            rankdir="TB",
+            expand_nested=False,
+            dpi=96,
+        )
+
+        try:
+            tf.keras.utils.plot_model(
+                self.model,
+                to_file=opj(self.filepath, "vqvae2_model.png"),
+                show_shapes=True,
+                show_dtype=False,
+                show_layer_names=True,
+                rankdir="TB",
+                expand_nested=False,
+                dpi=96,
+            )
+        except:
+            print(f"[WARNING] Could not save the entire model plot")
 
 
 
