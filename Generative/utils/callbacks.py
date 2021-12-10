@@ -284,6 +284,9 @@ class SaveVAEWeights(keras.callbacks.Callback):
             dpi=96,
         )
 
+    def on_epoch_begin(self, epoch, logs=None):
+        self.model.encoder.save_weights(opj(self.filepath,"encoder_weights.h5"))
+        self.model.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
 
     def on_epoch_end(self, epoch,logs=None):
 
@@ -291,9 +294,11 @@ class SaveVAEWeights(keras.callbacks.Callback):
         self.model.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
 
 
+
 class SaveGANWeights(keras.callbacks.Callback):
 
     def __init__(self,filepath):
+        os.makedirs(filepath,exist_ok=True)
         self.filepath=filepath
         super().__init__()
 
@@ -305,19 +310,19 @@ class SaveGANWeights(keras.callbacks.Callback):
         os.makedirs(self.filepath,exist_ok=True)
         tf.keras.utils.plot_model(
             self.model,
-            to_file=opj(self.filepath,"vae_model.png"),
+            to_file=opj(self.filepath,"gan_model.png"),
             show_shapes=True,
             show_dtype=False,
             show_layer_names=True,
             rankdir="TB",
-            expand_nested=False,
+            expand_nested=True,
             dpi=96,
         )
 
 
     def on_epoch_end(self, epoch,logs=None):
 
-        self.model.generator.save_weights(opj(self.filepath,"decoder_weights.h5"))
+        self.model.generator.save_weights(opj(self.filepath,"generator_weights.h5"))
         self.model.discriminator.save_weights(opj(self.filepath,"discriminator_weights.h5"))
 
 
