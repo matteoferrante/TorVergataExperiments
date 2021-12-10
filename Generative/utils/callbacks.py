@@ -284,9 +284,9 @@ class SaveVAEWeights(keras.callbacks.Callback):
             dpi=96,
         )
 
-    def on_epoch_begin(self, epoch, logs=None):
-        self.model.encoder.save_weights(opj(self.filepath,"encoder_weights.h5"))
-        self.model.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
+    #def on_epoch_begin(self, epoch, logs=None):
+    #    self.model.encoder.save_weights(opj(self.filepath,"encoder_weights.h5"))
+    #    self.model.decoder.save_weights(opj(self.filepath,"decoder_weights.h5"))
 
     def on_epoch_end(self, epoch,logs=None):
 
@@ -460,8 +460,8 @@ class Save_VQVAE2_Weights(keras.callbacks.Callback):
 
         emb_t=self.model.quantizer_t.get_weights()
 
-        np.save(opj(self.outdir,f"vq_vae_embeddings_bottom_{self.endname}.npy"),emb_b)
-        np.save(opj(self.outdir,f"vq_vae_embeddings_top_{self.endname}.npy"),emb_t)
+        np.save(opj(self.filepath,f"vq_vae2_embeddings_bottom.npy"),emb_b)
+        np.save(opj(self.filepath,f"vq_vae2_embeddings_top.npy"),emb_t)
 
     def on_train_begin(self, logs=None):
         """
