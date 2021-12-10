@@ -391,7 +391,6 @@ class Save_VQVAE_Weights(keras.callbacks.Callback):
     def on_epoch_end(self, epoch,logs=None):
 
         self.model.encoder.save_weights(opj(self.filepath,f"vq_vae_encoder.h5"))
-
         self.model.decoder.save_weights(opj(self.filepath,f"vq_vae_decoder.h5"))
 
 
