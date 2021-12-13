@@ -187,7 +187,7 @@ class VAEGAN(keras.Model):
 
 
 
-class cVAEGAN(keras.Model):
+class CVAEGAN(keras.Model):
     """A class to train a Conditional VAE-GAN model
 
     This implementation follows the basic idea of a GAN, so we will have
@@ -210,14 +210,14 @@ class cVAEGAN(keras.Model):
 
 
     """
-    def __init__(self,input_dim,latent_dim,output_channels=1,n_classes=10,conditional_size=(1,),n_emb=50,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]],discriminator_architecture=[(0,128),[(0,256)]]):
+    def __init__(self,input_dim,latent_dim,output_channels=1,n_classes=10,conditional_shape=(1,),n_emb=50,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]],discriminator_architecture=[(0,128),[(0,256)]]):
         """
 
         :param input_dim: tuple, input dimension (for example (28,28,1)
         :param latent_dim: int, dimension of the latent space
         :param output_channels: number of output channels. Usally should be the same of input_dim[-1]
         :param n_classes: int number of possible classes
-        :param conditional_size: tuple dimension of the conditional input
+        :param conditional_shape: tuple dimension of the conditional input
         :param encoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
         :param decoder_architecture: list of tuple, len of list is the number of blocks, [(n_block_res,n_filters)..]
 
@@ -232,10 +232,13 @@ class cVAEGAN(keras.Model):
         self.encoder_architecture=encoder_architecture
         self.decoder_architecture=decoder_architecture
         self.discriminator_architecture=discriminator_architecture
-        self.vae = CVAE(input_dim, latent_dim,n_classes=n_classes,emb_dim=n_emb,encoder_architecture=encoder_architecture,decoder_architecture=decoder_architecture,conditional_shape=conditional_size)
-        self.discriminator=ConditionalDiscriminator(input_shape=input_dim,conditional_shape=conditional_size,embedding_dim=n_emb,n_classes=n_classes,conv_layer_list=discriminator_architecture)
+        self.conditional_shape=conditional_shape
+        self.n_emb=n_emb
+        self.n_classes=n_classes
+        self.vae = CVAE(input_dim, latent_dim,n_classes=n_classes,emb_dim=n_emb,encoder_architecture=encoder_architecture,decoder_architecture=decoder_architecture,conditional_shape=conditional_shape)
+        self.discriminator=ConditionalDiscriminator(input_shape=input_dim,conditional_shape=conditional_shape,embedding_dim=n_emb,n_classes=n_classes,conv_layer_list=discriminator_architecture)
         #self.discriminator=self.build_discriminator()
-        self.vae.build(input_shape=(None,*input_dim))
+        #self.vae.build(input_shape=[(None,*input_dim),(None,*conditional_shape)])
 
     def build_discriminator(self):
         """
@@ -267,7 +270,7 @@ class cVAEGAN(keras.Model):
         :param vae_opt: optimizer for variational autoencoder, default Adam
         :param discriminator_optimizer: optimizer for discriminator, default Adam
         """
-        super(VAEGAN, self).compile(run_eagerly=True)
+        super(CVAEGAN, self).compile(run_eagerly=True)
         self.vae.compile(optimizer=vae_opt)
         self.discriminator.compile(optimizer=discriminator_optimizer,loss="binary_crossentropy",metrics="accuracy")
 
@@ -317,7 +320,7 @@ class cVAEGAN(keras.Model):
         ## step 1 train the discriminator with real and fake imgs
 
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
-        random_conditions = tf.random.uniform(shape=[batch_size,],minval=0,maxval=self.n_classes,dtype=tf.int32)
+        random_conditions = tf.random.uniform(shape=[batch_size,*self.conditional_shape],minval=0,maxval=self.n_classes,dtype=tf.int32)
 
 
         # Decode them to fake images
@@ -369,7 +372,7 @@ class cVAEGAN(keras.Model):
         #3. sample image and train the decoder in adversial way
 
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
-        random_conditions = tf.random.uniform(shape=[batch_size,],minval=0,maxval=self.n_classes,dtype=tf.int32)
+        random_conditions = tf.random.uniform(shape=[batch_size,*self.conditional_shape],minval=0,maxval=self.n_classes,dtype=tf.int32)
 
         misleading_labels = tf.zeros((batch_size, 1))
 

@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 
 import numpy as np
 
-from Generative.classes.Architectures import ConditionalEncoder
+from .Architectures import ConditionalEncoder
 
 
 class Sampling(keras.layers.Layer):
