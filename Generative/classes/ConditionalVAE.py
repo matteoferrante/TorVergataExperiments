@@ -7,6 +7,7 @@ from tensorflow.keras.models import Model
 
 import numpy as np
 
+from Generative.classes.Architectures import ConditionalEncoder
 
 
 class Sampling(keras.layers.Layer):
@@ -42,7 +43,7 @@ class CVAE(keras.Model):
 
 
 
-    def __init__(self, input_dim, latent_dim,n_classes=10,emb_dim=50,output_channel=1, **kwargs):
+    def __init__(self, input_dim, latent_dim,n_classes=10,emb_dim=50,output_channel=1,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]], conditional_shape=(1,), **kwargs):
         """
 
         :param input_dim: dimension of images
@@ -64,8 +65,18 @@ class CVAE(keras.Model):
         self.n_classes=n_classes
         self.emb_dim=emb_dim
 
-        self.encoder = self.build_encoder(input_dim,latent_dim)
-        self.decoder = self.build_decoder(latent_dim,output_channel=1)
+        self.condition_shape=conditional_shape
+
+
+        self.encoder_architecture=encoder_architecture
+        self.decoder_architecture=decoder_architecture
+
+        self.encoder=ConditionalEncoder(self.input_dim,latent_dim=latent_dim,conditional_shape=conditional_shape,n_classes=n_classes,embedding_dim=emb_dim,version="vae",conv_layer_list=encoder_architecture)
+        self.decoder=ConditionalEncoder(self.input_dim,latent_dim=latent_dim,conditional_shape=conditional_shape,embedding_dim=emb_dim,n_classes=n_classes,version="vae",conv_layer_list=decoder_architecture)
+
+
+#        self.encoder = self.build_encoder(input_dim,latent_dim)
+ #       self.decoder = self.build_decoder(latent_dim,output_channel=1)
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
         self.reconstruction_loss_tracker = keras.metrics.Mean(
             name="reconstruction_loss"
