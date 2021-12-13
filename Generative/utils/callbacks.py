@@ -244,6 +244,52 @@ class WandbImagesVAEGAN(keras.callbacks.Callback):
         wandb.log(log)
 
 
+class WandbImagesCVAEGAN(keras.callbacks.Callback):
+    """
+    A custom Callback to produce a grid of images in wandb for VAE
+    """
+
+    def __init__(self, validation_data):
+
+        """Workaround to keep validation data!"""
+
+        super().__init__()
+        self.validation_data = validation_data
+
+    def on_epoch_end(self, epoch, logs=None):
+
+
+        if self.validation_data:
+            x_recon=self.model.vae(next(iter(self.validation_data)))
+
+            x_recon=x_recon[:100] ## use more than 100 in bS
+            images = x_recon.numpy() * 255.
+            if self.model.input_dim[-1]==1:
+                images = np.repeat(images, 3, axis=-1)
+
+            vis = build_montages(images, (self.model.input_dim[0], self.model.input_dim[0]), (10, 10))[0]
+
+            log={f"image":wandb.Image(vis)}
+            wandb.log(log)
+        else:
+            print(f"No validation data {self.validation_data}")
+
+        ## just sampling
+
+        z=np.random.randn(100,self.model.latent_dim)
+        conditions=np.repeat(np.arange(0,self.model.n_classes,1).tolist(),10)
+
+        x_sampled=self.model.vae.decode(z,conditions)
+
+        images = x_sampled.numpy() *255.
+        if self.model.input_dim[-1] == 1:
+            images = np.repeat(images, 3, axis=-1)
+        vis = build_montages(images, (self.model.input_dim[0], self.model.input_dim[0]), (10, 10))[0]
+
+        log = {f"image_sampled": wandb.Image(vis)}
+        wandb.log(log)
+
+
 class SaveGeneratorWeights(keras.callbacks.Callback):
 
     def __init__(self, filepath):
