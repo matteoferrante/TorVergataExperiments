@@ -210,7 +210,7 @@ class CVAEGAN(keras.Model):
 
 
     """
-    def __init__(self,input_dim,latent_dim,output_channels=1,n_classes=10,conditional_shape=(1,),n_emb=50,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]],discriminator_architecture=[(0,128),[(0,256)]]):
+    def __init__(self,input_dim,latent_dim,output_channels=1,n_classes=10,conditional_shape=(1,),n_emb=50,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]],discriminator_architecture=[(0,128),[(0,256)]],discriminator_dense=None):
         """
 
         :param input_dim: tuple, input dimension (for example (28,28,1)
@@ -235,8 +235,9 @@ class CVAEGAN(keras.Model):
         self.conditional_shape=conditional_shape
         self.n_emb=n_emb
         self.n_classes=n_classes
+        self.discrminator_dense=discriminator_dense
         self.vae = CVAE(input_dim, latent_dim,n_classes=n_classes,emb_dim=n_emb,encoder_architecture=encoder_architecture,decoder_architecture=decoder_architecture,conditional_shape=conditional_shape)
-        self.discriminator=ConditionalDiscriminator(input_shape=input_dim,conditional_shape=conditional_shape,embedding_dim=n_emb,n_classes=n_classes,conv_layer_list=discriminator_architecture)
+        self.discriminator=ConditionalDiscriminator(input_shape=input_dim,conditional_shape=conditional_shape,embedding_dim=n_emb,n_classes=1,conv_layer_list=discriminator_architecture,dense=discriminator_dense)
         #self.discriminator=self.build_discriminator()
         #self.vae.build(input_shape=[(None,*input_dim),(None,*conditional_shape)])
 
@@ -324,7 +325,7 @@ class CVAEGAN(keras.Model):
 
 
         # Decode them to fake images
-        generated_images = self.vae.decode([random_latent_vectors,random_conditions])
+        generated_images = self.vae.decode(random_latent_vectors,random_conditions)
 
         # Combine them with real images
         combined_images = tf.concat([generated_images, img], axis=0)
@@ -377,7 +378,7 @@ class CVAEGAN(keras.Model):
         misleading_labels = tf.zeros((batch_size, 1))
 
         with tf.GradientTape() as tape:
-            y_pred = self.discriminator(self.vae.decoder([random_latent_vectors,random_conditions]))
+            y_pred = self.discriminator([self.vae.decoder([random_latent_vectors,random_conditions]),random_conditions])
             g_loss = self.loss_fn(misleading_labels, y_pred)
 
         grads = tape.gradient(g_loss, self.vae.decoder.trainable_weights)

@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 
 import numpy as np
 
-from .Architectures import ConditionalEncoder
+from .Architectures import ConditionalEncoder, ConditionalDecoder
 
 
 class Sampling(keras.layers.Layer):
@@ -72,7 +72,7 @@ class CVAE(keras.Model):
         self.decoder_architecture=decoder_architecture
 
         self.encoder=ConditionalEncoder(self.input_dim,latent_dim=latent_dim,conditional_shape=conditional_shape,n_classes=n_classes,embedding_dim=emb_dim,version="vae",conv_layer_list=encoder_architecture)
-        self.decoder=ConditionalEncoder(self.input_dim,latent_dim=latent_dim,conditional_shape=conditional_shape,embedding_dim=emb_dim,n_classes=n_classes,version="vae",conv_layer_list=decoder_architecture)
+        self.decoder=ConditionalDecoder(self.input_dim,latent_dim=latent_dim,conditional_shape=conditional_shape,embedding_dim=emb_dim,n_classes=n_classes,version="vae",conv_layer_list=decoder_architecture)
 
 
 #        self.encoder = self.build_encoder(input_dim,latent_dim)
@@ -156,6 +156,7 @@ class CVAE(keras.Model):
     def call(self, data):
         x,cond=data
         z_mean, z_log_var, z = self.encoder([x,cond])
+
         reconstruction = self.decoder([z,cond])
         return reconstruction
 
