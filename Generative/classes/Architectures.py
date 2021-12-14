@@ -313,7 +313,7 @@ def Discriminator(input_shape,n_classes,conv_layer_list,dense=None,dropout=0.3,a
     return discriminator
 
 
-def ConditionalDiscriminator(input_shape,conditional_shape,embedding_dim, n_classes, conv_layer_list, dropout=0.3, activation=None):
+def ConditionalDiscriminator(input_shape,conditional_shape,embedding_dim, n_classes, conv_layer_list, dropout=0.3,dense=None, activation=None):
     """
     Return a discriminator network
     :param input_shape: tuple, the shape of the input
@@ -356,9 +356,11 @@ def ConditionalDiscriminator(input_shape,conditional_shape,embedding_dim, n_clas
     # Flatten
     x = Flatten()(x)
 
-    x = Dense(4096)(x)
-    x = Dropout(dropout)(x)
-    x = LeakyReLU(alpha=0.2)(x)
+    if dense is not None:
+        x = Dense(dense)(x)
+        x = Dropout(dropout)(x)
+        x = LeakyReLU(alpha=0.2)(x)
+
     x = Dense(n_classes)(x)
 
     if activation is not None:

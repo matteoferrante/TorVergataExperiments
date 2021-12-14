@@ -1,0 +1,1 @@
+{"input_dim": [128, 128, 3], "latent_dim": 256, "num_embeddings": 1536, "train_variance": 4, "channels": 256, "n_res_block": 2, "n_res_channel": 256, "outchannels": 3}
