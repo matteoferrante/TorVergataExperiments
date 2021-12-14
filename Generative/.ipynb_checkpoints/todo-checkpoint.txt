@@ -1,0 +1,39 @@
+#TODO
+
+- Train VQ-VAE: [ok]
+- PixelCNN per campionare VQ-VAE: [ok]
+
+
+vqvqe.py allena vqvae e poi pixelcnn con phase 0 e 1) [ok]
+mnist_vqvae_sampling.py campiona le immagini una volta che sia vqvae sia pixelcnn sono stati allenati
+
+
+
+- Conditional VQ-VAE? [OK]
+    - Conditional PixelCNN su VQVAE normale è sufficiente? [Ok] su MNIST
+
+- VQ-VAE 2 [ok]
+
+- NVAE [ ]
+
+- Growing GAN [ok ]
+
+- VAE GAN [ok ]
+
+- C VAE GAN [ ]
+
+- WGAN [ ]
+
+- CWGAN [ ]
+
+- Transformer [ ]
+
+- Funzioni univoche build_generator e build_encoder, con opzioni [ok]
+- Salvare anche l'architetettura oltre che i pesi.               [ok]
+
+## IMPORTANTE ##
+WandbCallback da alcuni problemi -> solo una segnalazione su internet, negli script per allenare celebA serve implementare una funzione apposita per loggare i valori.
+Utilizzando un notebook l'errore avviene certe volte si e altre no, quindi è possibile re runnare la singola cella e proseguire.
+Conviene usare i notebook.
+
+
