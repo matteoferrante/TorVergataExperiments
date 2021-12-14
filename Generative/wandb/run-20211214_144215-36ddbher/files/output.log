@@ -1,0 +1,52 @@
+[INFO] loading image paths...
+[TRAINING]	 138545
+[VALIDATION]	 17318
+[TEST]		 17319
+[34m[1mwandb[39m[22m: [33mWARNING[39m Calling wandb.login() after wandb.init() has no effect.
+Model: "decoder"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #
+=================================================================
+ latent_input (InputLayer)   [(None, 512)]             0
+ dense_3 (Dense)             (None, 1024)              525312
+ reshape_1 (Reshape)         (None, 4, 4, 64)          0
+ leaky_re_lu_10 (LeakyReLU)  (None, 4, 4, 64)          0
+ conv_transpose_res_block_5   (None, 8, 8, 256)        147712
+ (ConvTransposeResBlock)
+ conv_transpose_res_block_6   (None, 16, 16, 128)      295040
+ (ConvTransposeResBlock)
+ conv_transpose_res_block_7   (None, 32, 32, 128)      460288
+ (ConvTransposeResBlock)
+ conv_transpose_res_block_8   (None, 64, 64, 64)       152320
+ (ConvTransposeResBlock)
+ conv_transpose_res_block_9   (None, 128, 128, 32)     38272
+ (ConvTransposeResBlock)
+ conv2d_transpose_11 (Conv2D  (None, 128, 128, 3)      867
+ Transpose)
+=================================================================
+Total params: 1,619,811
+Trainable params: 1,618,915
+Non-trainable params: 896
+_________________________________________________________________
+Model: "discriminator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #
+=================================================================
+ image_input (InputLayer)    [(None, 128, 128, 3)]     0
+ conv_res_block_5 (ConvResBl  (None, 64, 64, 32)       896
+ ock)
+ conv_res_block_6 (ConvResBl  (None, 32, 32, 64)       18496
+ ock)
+ conv_res_block_7 (ConvResBl  (None, 16, 16, 128)      386560
+ ock)
+ conv_res_block_8 (ConvResBl  (None, 8, 8, 128)        460288
+ ock)
+ conv_res_block_9 (ConvResBl  (None, 4, 4, 256)        1543168
+ ock)
+ flatten_1 (Flatten)         (None, 4096)              0
+ dense_2 (Dense)             (None, 1)                 4097
+=================================================================
+Total params: 2,413,505
+Trainable params: 2,411,457
+Non-trainable params: 2,048
+_________________________________________________________________

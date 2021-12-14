@@ -1,0 +1,77 @@
+wandb_version: 1
+
+BS:
+  desc: null
+  value: 256
+EPOCHS:
+  desc: null
+  value: 240
+INIT_LR:
+  desc: null
+  value: 5.0e-05
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.12.7
+    framework: keras
+    is_jupyter_run: true
+    is_kaggle_kernel: false
+    python_version: 3.8.10
+    start_time: 1639492615
+    t:
+      1:
+      - 2
+      - 3
+      3:
+      - 16
+      4: 3.8.10
+      5: 0.12.7
+      8:
+      - 1
+      - 5
+dataset:
+  desc: null
+  value: celebA
+decoder_architecture:
+  desc: null
+  value:
+  - - 3
+    - 256
+  - - 1
+    - 256
+  - - 1
+    - 128
+  - - 1
+    - 64
+encoder_architecture:
+  desc: null
+  value:
+  - - 1
+    - 64
+  - - 1
+    - 128
+  - - 1
+    - 256
+  - - 3
+    - 256
+input_shape:
+  desc: null
+  value:
+  - 128
+  - 128
+  - 3
+latent_dim:
+  desc: null
+  value: 512
+nota:
+  desc: null
+  value: DGX
+num_embeddings:
+  desc: null
+  value: 256
+phase:
+  desc: null
+  value: PixelCNN_Training
+type:
+  desc: null
+  value: VQ-VAE
