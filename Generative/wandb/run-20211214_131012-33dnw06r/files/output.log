@@ -1,0 +1,9 @@
+[INFO] loading image paths...
+[TRAINING]	 138545
+[VALIDATION]	 17318
+[TEST]		 17319
+('You must install pydot (`pip install pydot`) and install graphviz (see instructions at https://graphviz.gitlab.io/download/) ', 'for plot_model/model_to_dot to work.')
+Epoch 1/250
+2021-12-14 13:10:15.476464: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:185] None of the MLIR Optimization Passes are enabled (registered 2)
+2021-12-14 13:10:16.306025: E tensorflow/stream_executor/cuda/cuda_blas.cc:226] failed to create cublas handle: CUBLAS_STATUS_NOT_INITIALIZED
+2021-12-14 13:10:16.306129: W tensorflow/core/framework/op_kernel.cc:1692] OP_REQUIRES failed at matmul_op_impl.h:630 : Internal: Attempting to perform BLAS operation using StreamExecutor without BLAS support

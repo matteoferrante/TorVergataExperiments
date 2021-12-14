@@ -1,0 +1,26 @@
+{
+    "os": "Linux-5.4.0-81-generic-x86_64-with-glibc2.29",
+    "python": "3.8.10",
+    "heartbeatAt": "2021-12-14T13:12:25.624394",
+    "startedAt": "2021-12-14T13:12:23.712946",
+    "docker": null,
+    "gpu": "NVIDIA A100-SXM-80GB",
+    "gpu_count": 8,
+    "cpu_count": 256,
+    "cuda": null,
+    "args": [
+        "-f",
+        "/root/.local/share/jupyter/runtime/kernel-ed6c6f8e-f77f-4fe6-bdc7-41df8b805914.json"
+    ],
+    "state": "running",
+    "program": "<python with no main file>",
+    "git": {
+        "remote": "https://github.com/matteoferrante/TorVergataExperiments.git",
+        "commit": "543728307b17c6190fe11208c829f172c8d48d17"
+    },
+    "email": "matteo-ferrante@hotmail.it",
+    "root": "/home/matteo/NeuroGEN/TorVergataExperiments",
+    "host": "1782c985d843",
+    "username": "root",
+    "executable": "/usr/bin/python"
+}

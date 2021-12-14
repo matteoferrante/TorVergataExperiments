@@ -1,0 +1,75 @@
+wandb_version: 1
+
+BS:
+  desc: null
+  value: 512
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.12.7
+    framework: keras
+    is_jupyter_run: true
+    is_kaggle_kernel: false
+    python_version: 3.8.10
+    start_time: 1639487607
+    t:
+      1:
+      - 2
+      - 3
+      3:
+      - 16
+      4: 3.8.10
+      5: 0.12.7
+      8:
+      - 1
+      - 5
+dataset:
+  desc: null
+  value: celebA
+decoder_architecture:
+  desc: null
+  value:
+  - - 0
+    - 256
+  - - 0
+    - 128
+  - - 1
+    - 128
+  - - 1
+    - 64
+  - - 1
+    - 32
+encoder_architecture:
+  desc: null
+  value:
+  - - 0
+    - 32
+  - - 0
+    - 64
+  - - 1
+    - 128
+  - - 1
+    - 128
+  - - 1
+    - 256
+epochs:
+  desc: null
+  value: 250
+init_lr:
+  desc: null
+  value: 5.0e-05
+latent_dim:
+  desc: null
+  value: 512
+nota:
+  desc: null
+  value: DGX
+target_shape:
+  desc: null
+  value:
+  - 128
+  - 128
+  - 3
+type:
+  desc: null
+  value: GAN
