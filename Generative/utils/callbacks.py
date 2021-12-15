@@ -223,8 +223,10 @@ class WandbImagesVAEGAN(keras.callbacks.Callback):
 
             x_recon=x_recon[:100] ## use more than 100 in bS
             images = x_recon.numpy() * 255.
-            images = np.repeat(images, 3, axis=-1)
-            vis = build_montages(images, (28, 28), (10, 10))[0]
+            if self.model.input_dim[-1]==1:
+                images = np.repeat(images, 3, axis=-1)
+
+            vis = build_montages(images, (self.model.input_dim[0], self.model.input_dim[0]), (10, 10))[0]
 
             log={f"image":wandb.Image(vis)}
             wandb.log(log)
@@ -236,9 +238,11 @@ class WandbImagesVAEGAN(keras.callbacks.Callback):
         z=np.random.randn(100,self.model.latent_dim)
         x_sampled=self.model.vae.decode(z)
 
-        images = x_sampled.numpy() *255.
-        images = np.repeat(images, 3, axis=-1)
-        vis = build_montages(images, (28, 28), (10, 10))[0]
+        images = x_sampled.numpy() * 255.
+        if self.model.input_dim[-1] == 1:
+            images = np.repeat(images, 3, axis=-1)
+
+        vis = build_montages(images, (self.model.input_dim[0], self.model.input_dim[0]), (10, 10))[0]
 
         log = {f"image_sampled": wandb.Image(vis)}
         wandb.log(log)
