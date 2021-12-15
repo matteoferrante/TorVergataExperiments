@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras as keras
 
-from .Architectures import ConditionalDiscriminator
+from .Architectures import ConditionalDiscriminator, Discriminator
 from .ConditionalVAE import CVAE
 from .VAE import VAE
 from tensorflow.keras.layers import *
@@ -29,7 +29,7 @@ class VAEGAN(keras.Model):
 
 
     """
-    def __init__(self,input_dim,latent_dim,output_channels=1):
+    def __init__(self,input_dim,latent_dim,output_channels=1,encoder_architecture=[(0,128),[(0,256)]], decoder_architecture=[(0,128),[(0,256)]],discriminator_architecture=[(0,128),[(0,256)]],discriminator_dense=None):
         """
 
         :param input_dim: tuple, input dimension (for example (28,28,1)
@@ -43,9 +43,23 @@ class VAEGAN(keras.Model):
 
         self.input_dim=input_dim
         self.latent_dim=latent_dim
-        self.output_channels=output_channels
-        self.vae = VAE(input_dim, latent_dim)
-        self.discriminator=self.build_discriminator()
+
+
+        self.output_channels=input_dim[-1]
+
+
+        self.encoder_architecture=encoder_architecture
+        self.decoder_architecture=decoder_architecture
+        self.discriminator_architecture=discriminator_architecture
+
+        self.discrminator_dense = discriminator_dense
+        self.vae = VAE(input_dim, latent_dim,encoder_architecture=encoder_architecture, decoder_architecture=decoder_architecture,)
+        self.discriminator = Discriminator(input_shape=input_dim,
+                                                      conv_layer_list=discriminator_architecture,
+                                                      dense=discriminator_dense)
+
+#        self.vae = VAE(input_dim, latent_dim)
+ #       self.discriminator=self.build_discriminator()
         self.vae.build(input_shape=(None,*input_dim))
 
     def build_discriminator(self):
