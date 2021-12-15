@@ -54,7 +54,7 @@ class VAEGAN(keras.Model):
 
         self.discrminator_dense = discriminator_dense
         self.vae = VAE(input_dim, latent_dim,encoder_architecture=encoder_architecture, decoder_architecture=decoder_architecture,)
-        self.discriminator = Discriminator(input_shape=input_dim,
+        self.discriminator = Discriminator(input_shape=input_dim,n_classes=1,
                                                       conv_layer_list=discriminator_architecture,
                                                       dense=discriminator_dense)
 
