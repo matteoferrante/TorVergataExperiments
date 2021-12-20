@@ -200,6 +200,10 @@ class VAEGAN(keras.Model):
         return {"d_acc":d_acc,"d_loss":d_loss,"vae_loss":total_vae_loss,"kl_loss":kl_loss}
 
 
+    def __call__(self, x):
+        return self.discriminator(self.vae(x))
+
+
 
 class CVAEGAN(keras.Model):
     """A class to train a Conditional VAE-GAN model
